@@ -1,24 +1,38 @@
-import { Tabs } from 'expo-router';
-import { Home, User, Settings } from 'lucide-react-native';
+// import { Tabs } from 'expo-router';
+// import { Home, User, Settings } from 'lucide-react-native';
 
-export default function TabLayout() {
+// export default function TabLayout() {
+//   return (
+//     <Tabs
+//       screenOptions={{
+//         headerShown: false,
+//         tabBarActiveTintColor: '#007AFF',
+//         tabBarInactiveTintColor: '#8E8E93',
+//         tabBarStyle: {
+//           backgroundColor: '#fff',
+//           borderTopWidth: 1,
+//           borderTopColor: '#e1e5e9',
+//           height: 60,
+//           paddingBottom: 8,
+//           paddingTop: 8,
+//         },
+//       }}>
+//       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color, size }) => <Home size={size} color={color} /> }} />
+//       <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }) => <User size={size} color={color} /> }} />
+//     </Tabs>
+//   );
+// }
+import { Slot } from 'expo-router';
+import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
+import { store, persistor } from '../../../store/store';
+
+export default function RootLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: '#8E8E93',
-        tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#e1e5e9',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-      }}>
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color, size }) => <Home size={size} color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color, size }) => <User size={size} color={color} /> }} />
-    </Tabs>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <Slot />
+      </PersistGate>
+    </Provider>
   );
 }

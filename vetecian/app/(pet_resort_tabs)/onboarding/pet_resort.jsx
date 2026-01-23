@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { Camera, ChevronDown, Clock, X } from 'lucide-react-native';
 import { petResortDetail } from '../../../store/slices/authSlice'
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 
 
 export default function ResortOnboarding() {

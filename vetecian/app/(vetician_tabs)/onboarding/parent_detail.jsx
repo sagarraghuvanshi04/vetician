@@ -4,7 +4,7 @@ import { useNavigation, useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { User, Mail, Phone, Home, Menu, Camera, UserCircle } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system/legacy';
+import * as FileSystem from 'expo-file-system';
 import { parentUser } from '../../../store/slices/authSlice';
 import { validateEmail } from '../../../utils/validation';
 

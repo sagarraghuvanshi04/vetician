@@ -63,19 +63,7 @@ const loginValidation = [
     .withMessage('Password is required'),
 ];
 
-// const parentRegisterValidation = [
-//   ...registerValidation, // Includes name, email, password from registerValidation
-//   body('phone')
-//     .trim()
-//     .isLength({ min: 10, max: 15 })
-//     .withMessage('Phone must be between 10 and 15 digits')
-//     .isNumeric()
-//     .withMessage('Phone must contain only numbers'),
-//   body('address')
-//     .trim()
-//     .isLength({ min: 10 })
-//     .withMessage('Address must be at least 10 characters long'),
-// ];
+
 
 // Routes
 router.post('/register', registerValidation, validate, register);

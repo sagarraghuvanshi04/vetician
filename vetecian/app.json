@@ -18,8 +18,7 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font",
-      "expo-web-browser"
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true
@@ -27,12 +26,12 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "2f6fd0a7-08ec-4c5f-bc9a-c0492f373e64"
+        "projectId": "b073997f-8942-40e6-89bf-e7035604dc3d"
       }
     },
     "android": {
       "package": "com.aaditri1001.vetician"
     },
-    "owner": "veticianadmin"
+    "owner": "viplavnagde"
   }
 }

@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { signUpUser } from '../../store/slices/authSlice';
@@ -20,13 +30,13 @@ export default function SignUp() {
 
   const router = useRouter();
   const dispatch = useDispatch();
-  const { isLoading, error } = useSelector(state => state.auth);
+  const { isLoading, error } = useSelector((state) => state.auth);
 
   const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
+      setErrors((prev) => ({ ...prev, [field]: null }));
     }
   };
 
@@ -37,7 +47,7 @@ export default function SignUp() {
       email: formData.email,
       password: formData.password ? '***PROVIDED***' : 'MISSING',
       confirmPassword: formData.confirmPassword ? '***PROVIDED***' : 'MISSING',
-      loginType: loginType
+      loginType: loginType,
     });
 
     // Reset errors
@@ -63,7 +73,9 @@ export default function SignUp() {
       console.log('❌ SIGNUP COMPONENT - Email validation failed: empty');
     } else if (!validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email';
-      console.log('❌ SIGNUP COMPONENT - Email validation failed: invalid format');
+      console.log(
+        '❌ SIGNUP COMPONENT - Email validation failed: invalid format',
+      );
     } else {
       console.log('✅ SIGNUP COMPONENT - Email validation passed');
     }
@@ -73,23 +85,32 @@ export default function SignUp() {
       console.log('❌ SIGNUP COMPONENT - Password validation failed: empty');
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
-      console.log('❌ SIGNUP COMPONENT - Password validation failed: too short');
+      console.log(
+        '❌ SIGNUP COMPONENT - Password validation failed: too short',
+      );
     } else {
       console.log('✅ SIGNUP COMPONENT - Password validation passed');
     }
 
     if (!formData.confirmPassword.trim()) {
       newErrors.confirmPassword = 'Please confirm your password';
-      console.log('❌ SIGNUP COMPONENT - Confirm password validation failed: empty');
+      console.log(
+        '❌ SIGNUP COMPONENT - Confirm password validation failed: empty',
+      );
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
-      console.log('❌ SIGNUP COMPONENT - Confirm password validation failed: mismatch');
+      console.log(
+        '❌ SIGNUP COMPONENT - Confirm password validation failed: mismatch',
+      );
     } else {
       console.log('✅ SIGNUP COMPONENT - Confirm password validation passed');
     }
 
     if (Object.keys(newErrors).length > 0) {
-      console.log('❌ SIGNUP COMPONENT - Validation failed, errors:', newErrors);
+      console.log(
+        '❌ SIGNUP COMPONENT - Validation failed, errors:',
+        newErrors,
+      );
       setErrors(newErrors);
       return;
     }
@@ -101,13 +122,13 @@ export default function SignUp() {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
-        role: loginType
+        role: loginType,
       };
       console.log('📋 SIGNUP COMPONENT - Dispatch params:', {
         name: dispatchParams.name,
         email: dispatchParams.email,
         password: dispatchParams.password ? '***HIDDEN***' : 'MISSING',
-        role: dispatchParams.role
+        role: dispatchParams.role,
       });
 
       const result = await dispatch(signUpUser(dispatchParams)).unwrap();
@@ -118,49 +139,77 @@ export default function SignUp() {
         message: result.message,
         hasUser: !!result.user,
         hasToken: !!result.token,
-        userRole: result.user?.role
+        userRole: result.user?.role,
       });
 
       if (result.success) {
-        console.log('🎉 SIGNUP COMPONENT - Signup successful, showing success alert');
+        console.log(
+          '🎉 SIGNUP COMPONENT - Signup successful, showing success alert',
+        );
         Alert.alert(
           'Account Created',
           'Your account has been created successfully!',
-          [{ 
-            text: 'OK', 
-            onPress: () => {
-              console.log('🎯 SIGNUP COMPONENT - Navigating based on loginType:', loginType);
-              // Route to appropriate onboarding based on login type
-              switch(loginType) {
-                case 'veterinarian':
-                  console.log('🏥 SIGNUP COMPONENT - Routing to veterinarian onboarding');
-                  router.replace('/(doc_tabs)/onboarding/onboarding_conf');
-                  break;
-                case 'pet_resort':
-                  console.log('🏨 SIGNUP COMPONENT - Routing to pet resort tabs');
-                  router.replace('/(pet_resort_tabs)/(tabs)');
-                  break;
-                case 'peravet':
-                  console.log('🐕 SIGNUP COMPONENT - Routing to peravet tabs');
-                  router.replace('/(peravet_tabs)/(tabs)');
-                  break;
-                default: // vetician
-                  console.log('👤 SIGNUP COMPONENT - Routing to vetician onboarding (default)');
-                  router.replace('/(vetician_tabs)/onboarding/onboarding_conf');
-              }
-            }
-          }]
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                console.log(
+                  '🎯 SIGNUP COMPONENT - Navigating based on loginType:',
+                  loginType,
+                );
+                // Route to appropriate onboarding based on login type
+                switch (loginType) {
+                  case 'veterinarian':
+                    console.log(
+                      '🏥 SIGNUP COMPONENT - Routing to veterinarian onboarding',
+                    );
+                    router.replace('/(doc_tabs)/onboarding/onboarding_conf');
+                    break;
+                  case 'pet_resort':
+                    console.log(
+                      '🏨 SIGNUP COMPONENT - Routing to pet resort tabs',
+                    );
+                    router.replace('/(pet_resort_tabs)/(tabs)');
+                    break;
+                  case 'peravet':
+                    console.log(
+                      '🐕 SIGNUP COMPONENT - Routing to peravet tabs',
+                    );
+                    router.replace('/(peravet_tabs)/(tabs)');
+                    break;
+                  default: // vetician
+                    console.log(
+                      '👤 SIGNUP COMPONENT - Routing to vetician onboarding (default)',
+                    );
+                    router.replace(
+                      '/(vetician_tabs)/onboarding/onboarding_conf',
+                    );
+                }
+              },
+            },
+          ],
         );
       } else {
-        console.log('❌ SIGNUP COMPONENT - Signup failed, result.success is false');
+        console.log(
+          '❌ SIGNUP COMPONENT - Signup failed, result.success is false',
+        );
       }
     } catch (error) {
       console.log('❌ SIGNUP COMPONENT - Caught error in handleSignUp:', error);
       console.log('❌ SIGNUP COMPONENT - Error type:', typeof error);
-      console.log('❌ SIGNUP COMPONENT - Error message:', error.message || error);
-      console.log('❌ SIGNUP COMPONENT - Full error object:', JSON.stringify(error, null, 2));
-      
-      Alert.alert('Sign Up Failed', error || 'An error occurred during sign up');
+      console.log(
+        '❌ SIGNUP COMPONENT - Error message:',
+        error.message || error,
+      );
+      console.log(
+        '❌ SIGNUP COMPONENT - Full error object:',
+        JSON.stringify(error, null, 2),
+      );
+
+      Alert.alert(
+        'Sign Up Failed',
+        error || 'An error occurred during sign up',
+      );
     }
   };
 
@@ -169,7 +218,10 @@ export default function SignUp() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
           <View style={styles.header}>
             <View style={styles.logoContainer}>
@@ -194,7 +246,9 @@ export default function SignUp() {
                   autoCorrect={false}
                 />
               </View>
-              {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+              {errors.name && (
+                <Text style={styles.errorText}>{errors.name}</Text>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -211,7 +265,9 @@ export default function SignUp() {
                   autoCorrect={false}
                 />
               </View>
-              {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+              {errors.email && (
+                <Text style={styles.errorText}>{errors.email}</Text>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
@@ -237,18 +293,25 @@ export default function SignUp() {
                   )}
                 </TouchableOpacity>
               </View>
-              {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password}</Text>
+              )}
             </View>
 
             <View style={styles.inputContainer}>
               <View style={styles.inputWrapper}>
                 <Lock size={20} color="#888" style={styles.inputIcon} />
                 <TextInput
-                  style={[styles.input, errors.confirmPassword && styles.inputError]}
+                  style={[
+                    styles.input,
+                    errors.confirmPassword && styles.inputError,
+                  ]}
                   placeholder="Confirm Password"
                   placeholderTextColor="#aaa"
                   value={formData.confirmPassword}
-                  onChangeText={(value) => handleInputChange('confirmPassword', value)}
+                  onChangeText={(value) =>
+                    handleInputChange('confirmPassword', value)
+                  }
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                 />
@@ -263,7 +326,9 @@ export default function SignUp() {
                   )}
                 </TouchableOpacity>
               </View>
-              {errors.confirmPassword && <Text style={styles.errorText}>{errors.confirmPassword}</Text>}
+              {errors.confirmPassword && (
+                <Text style={styles.errorText}>{errors.confirmPassword}</Text>
+              )}
             </View>
 
             {error && (
@@ -278,30 +343,42 @@ export default function SignUp() {
                 <TouchableOpacity
                   style={[
                     styles.loginTypeButton,
-                    loginType === 'vetician' && styles.loginTypeButtonActive
+                    loginType === 'vetician' && styles.loginTypeButtonActive,
                   ]}
                   onPress={() => setLoginType('vetician')}
                 >
-                  <PawPrint size={16} color={loginType === 'vetician' ? '#fff' : '#666'} />
-                  <Text style={[
-                    styles.loginTypeText,
-                    loginType === 'vetician' && styles.loginTypeTextActive
-                  ]}>
+                  <PawPrint
+                    size={16}
+                    color={loginType === 'vetician' ? '#fff' : '#666'}
+                  />
+                  <Text
+                    style={[
+                      styles.loginTypeText,
+                      loginType === 'vetician' && styles.loginTypeTextActive,
+                    ]}
+                  >
                     Pet Parent
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
                     styles.loginTypeButton,
-                    loginType === 'veterinarian' && styles.loginTypeButtonActive
+                    loginType === 'veterinarian' &&
+                      styles.loginTypeButtonActive,
                   ]}
                   onPress={() => setLoginType('veterinarian')}
                 >
-                  <PawPrint size={16} color={loginType === 'veterinarian' ? '#fff' : '#666'} />
-                  <Text style={[
-                    styles.loginTypeText,
-                    loginType === 'veterinarian' && styles.loginTypeTextActive
-                  ]}>
+                  <PawPrint
+                    size={16}
+                    color={loginType === 'veterinarian' ? '#fff' : '#666'}
+                  />
+                  <Text
+                    style={[
+                      styles.loginTypeText,
+                      loginType === 'veterinarian' &&
+                        styles.loginTypeTextActive,
+                    ]}
+                  >
                     Veterinarian
                   </Text>
                 </TouchableOpacity>
@@ -350,8 +427,11 @@ export default function SignUp() {
 
             <View style={styles.signInContainer}>
               <Text style={styles.signInText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => router.back()}>
-                <Text style={styles.signInLink}>Sign In</Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/signin')}>
+                <Text style={styles.signInLink}>
+                  Already have an account?{' '}
+                  <Text style={{ fontWeight: 'bold' }}>Sign In</Text>
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -365,7 +445,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 35
+    paddingTop: 35,
   },
   scrollContent: {
     flexGrow: 1,
