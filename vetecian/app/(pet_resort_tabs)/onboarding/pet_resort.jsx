@@ -113,10 +113,10 @@ export default function ResortOnboarding() {
         type: 'image/jpeg'
       });
       formData.append('upload_preset', 'vetician');
-      formData.append('cloud_name', 'dqwzfs4ox');
+      formData.append('cloud_name', 'dmtadfogc');
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/dqwzfs4ox/image/upload`,
+        `https://api.cloudinary.com/v1_1/dmtadfogc/image/upload`,
         { method: 'POST', body: formData }
       );
 

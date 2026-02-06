@@ -1,12 +1,14 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSelector } from 'react-redux';
-import { Activity, HeartPulse, Stethoscope, ClipboardList, Syringe, Menu } from 'lucide-react-native';
+import { Activity, HeartPulse, Stethoscope, ClipboardList, Syringe, Menu, CheckCircle } from 'lucide-react-native';
 import { DrawerActions } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
 export default function Home() {
     const { user } = useSelector(state => state.auth);
     const navigation = useNavigation();
+    const router = useRouter();
 
     // Paravet-specific stats
     const stats = [
@@ -31,6 +33,20 @@ export default function Home() {
                     <Text style={styles.subtitle}>Today's veterinary overview</Text>
                 </View>
             </View>
+
+            {/* Onboarding Banner */}
+            <TouchableOpacity 
+                style={styles.onboardingBanner}
+                onPress={() => router.push('/(peravet_tabs)/onboarding')}
+            >
+                <View style={styles.bannerContent}>
+                    <CheckCircle size={24} color="#00B0FF" />
+                    <View style={styles.bannerText}>
+                        <Text style={styles.bannerTitle}>Complete Your Onboarding</Text>
+                        <Text style={styles.bannerDescription}>Set up your profile to start accepting requests</Text>
+                    </View>
+                </View>
+            </TouchableOpacity>
 
             {/* Medical stats cards */}
             <View style={styles.statsContainer}>
@@ -124,6 +140,38 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 14,
         color: 'rgba(255,255,255,0.8)',
+    },
+    onboardingBanner: {
+        marginHorizontal: 20,
+        marginTop: -20,
+        marginBottom: 12,
+        backgroundColor: '#E8F4FD',
+        borderRadius: 12,
+        borderLeftWidth: 4,
+        borderLeftColor: '#00B0FF',
+        padding: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        elevation: 2,
+    },
+    bannerContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    bannerText: {
+        marginLeft: 12,
+        flex: 1,
+    },
+    bannerTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1a1a1a',
+        marginBottom: 2,
+    },
+    bannerDescription: {
+        fontSize: 12,
+        color: '#666',
     },
     statsContainer: {
         flexDirection: 'row',

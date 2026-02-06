@@ -40,81 +40,25 @@ export default function SignUp() {
     }
   };
 
+ 
+
   const handleSignUp = async () => {
     console.log('📱 SIGNUP COMPONENT - handleSignUp started');
-    console.log('📱 SIGNUP COMPONENT - Form data:', {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password ? '***PROVIDED***' : 'MISSING',
-      confirmPassword: formData.confirmPassword ? '***PROVIDED***' : 'MISSING',
-      loginType: loginType,
-    });
-
+    
     // Reset errors
     setErrors({});
-    console.log('📱 SIGNUP COMPONENT - Errors reset');
 
-    // Validation
-    console.log('📱 SIGNUP COMPONENT - Starting validation...');
+    // Validation logic (Same as yours)
     const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Full name is required';
-      console.log('❌ SIGNUP COMPONENT - Name validation failed: empty');
-    } else if (formData.name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-      console.log('❌ SIGNUP COMPONENT - Name validation failed: too short');
-    } else {
-      console.log('✅ SIGNUP COMPONENT - Name validation passed');
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-      console.log('❌ SIGNUP COMPONENT - Email validation failed: empty');
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-      console.log(
-        '❌ SIGNUP COMPONENT - Email validation failed: invalid format',
-      );
-    } else {
-      console.log('✅ SIGNUP COMPONENT - Email validation passed');
-    }
-
-    if (!formData.password.trim()) {
-      newErrors.password = 'Password is required';
-      console.log('❌ SIGNUP COMPONENT - Password validation failed: empty');
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-      console.log(
-        '❌ SIGNUP COMPONENT - Password validation failed: too short',
-      );
-    } else {
-      console.log('✅ SIGNUP COMPONENT - Password validation passed');
-    }
-
-    if (!formData.confirmPassword.trim()) {
-      newErrors.confirmPassword = 'Please confirm your password';
-      console.log(
-        '❌ SIGNUP COMPONENT - Confirm password validation failed: empty',
-      );
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-      console.log(
-        '❌ SIGNUP COMPONENT - Confirm password validation failed: mismatch',
-      );
-    } else {
-      console.log('✅ SIGNUP COMPONENT - Confirm password validation passed');
-    }
+    if (!formData.name.trim()) newErrors.name = 'Full name is required';
+    if (!formData.email.trim() || !validateEmail(formData.email)) newErrors.email = 'Valid email is required';
+    if (!formData.password.trim() || formData.password.length < 6) newErrors.password = 'Password must be 6+ chars';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
     if (Object.keys(newErrors).length > 0) {
-      console.log(
-        '❌ SIGNUP COMPONENT - Validation failed, errors:',
-        newErrors,
-      );
       setErrors(newErrors);
       return;
     }
-    console.log('✅ SIGNUP COMPONENT - All validations passed');
 
     try {
       console.log('🚀 SIGNUP COMPONENT - Dispatching signUpUser action...');
@@ -122,30 +66,19 @@ export default function SignUp() {
         name: formData.name.trim(),
         email: formData.email.trim(),
         password: formData.password,
-        role: loginType,
+        role: loginType, // ✅ Backend usually expects 'role'
       };
-      console.log('📋 SIGNUP COMPONENT - Dispatch params:', {
-        name: dispatchParams.name,
-        email: dispatchParams.email,
-        password: dispatchParams.password ? '***HIDDEN***' : 'MISSING',
-        role: dispatchParams.role,
-      });
 
+      // ✅ FIX: Response ko 'result' variable mein store karein
       const result = await dispatch(signUpUser(dispatchParams)).unwrap();
 
       console.log('✅ SIGNUP COMPONENT - signUpUser dispatch successful');
-      console.log('📄 SIGNUP COMPONENT - Result:', {
-        success: result.success,
-        message: result.message,
-        hasUser: !!result.user,
-        hasToken: !!result.token,
-        userRole: result.user?.role,
-      });
+      console.log('📄 SIGNUP COMPONENT - Result:', result);
 
-      if (result.success) {
-        console.log(
-          '🎉 SIGNUP COMPONENT - Signup successful, showing success alert',
-        );
+      // ✅ Check if result exists (unwrap handles errors in catch block)
+      if (result) {
+        console.log('🎉 SIGNUP COMPONENT - Signup successful');
+        
         Alert.alert(
           'Account Created',
           'Your account has been created successfully!',
@@ -153,65 +86,37 @@ export default function SignUp() {
             {
               text: 'OK',
               onPress: () => {
-                console.log(
-                  '🎯 SIGNUP COMPONENT - Navigating based on loginType:',
-                  loginType,
-                );
                 // Route to appropriate onboarding based on login type
                 switch (loginType) {
                   case 'veterinarian':
-                    console.log(
-                      '🏥 SIGNUP COMPONENT - Routing to veterinarian onboarding',
-                    );
                     router.replace('/(doc_tabs)/onboarding/onboarding_conf');
                     break;
                   case 'pet_resort':
-                    console.log(
-                      '🏨 SIGNUP COMPONENT - Routing to pet resort tabs',
-                    );
                     router.replace('/(pet_resort_tabs)/(tabs)');
                     break;
                   case 'peravet':
-                    console.log(
-                      '🐕 SIGNUP COMPONENT - Routing to peravet tabs',
-                    );
                     router.replace('/(peravet_tabs)/(tabs)');
                     break;
-                  default: // vetician
-                    console.log(
-                      '👤 SIGNUP COMPONENT - Routing to vetician onboarding (default)',
-                    );
-                    router.replace(
-                      '/(vetician_tabs)/onboarding/onboarding_conf',
-                    );
+                  default: // vetician / pet parent
+                    router.replace('/(vetician_tabs)/onboarding/onboarding_conf');
                 }
               },
             },
           ],
         );
-      } else {
-        console.log(
-          '❌ SIGNUP COMPONENT - Signup failed, result.success is false',
-        );
       }
     } catch (error) {
-      console.log('❌ SIGNUP COMPONENT - Caught error in handleSignUp:', error);
-      console.log('❌ SIGNUP COMPONENT - Error type:', typeof error);
-      console.log(
-        '❌ SIGNUP COMPONENT - Error message:',
-        error.message || error,
-      );
-      console.log(
-        '❌ SIGNUP COMPONENT - Full error object:',
-        JSON.stringify(error, null, 2),
-      );
-
+      console.log('❌ SIGNUP COMPONENT - Caught error:', error);
+      
+      // Error handling for existing users or server issues
       Alert.alert(
         'Sign Up Failed',
-        error || 'An error occurred during sign up',
+        typeof error === 'string' ? error : (error.message || 'An error occurred')
       );
     }
   };
+
+
 
   return (
     <KeyboardAvoidingView
@@ -382,19 +287,19 @@ export default function SignUp() {
                     Veterinarian
                   </Text>
                 </TouchableOpacity>
-                {/* <TouchableOpacity
+                <TouchableOpacity
                   style={[
                     styles.loginTypeButton,
-                    loginType === 'peravet' && styles.loginTypeButtonActive
+                    loginType === 'paravet' && styles.loginTypeButtonActive
                   ]}
-                  onPress={() => setLoginType('peravet')}
+                  onPress={() => setLoginType('paravet')}
                 >
-                  <PawPrint size={16} color={loginType === 'peravet' ? '#fff' : '#666'} />
+                  <PawPrint size={16} color={loginType === 'paravet' ? '#fff' : '#666'} />
                   <Text style={[
                     styles.loginTypeText,
-                    loginType === 'peravet' && styles.loginTypeTextActive
+                    loginType === 'paravet' && styles.loginTypeTextActive
                   ]}>
-                    Peravet
+                    Paravet
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -411,7 +316,7 @@ export default function SignUp() {
                   ]}>
                     Pet Resort
                   </Text>
-                </TouchableOpacity> */}
+                </TouchableOpacity>
               </View>
             </View>
 

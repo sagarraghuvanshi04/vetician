@@ -46,15 +46,10 @@ export default function PetDetail() {
     console.log('[Cloudinary] Starting upload:', {
       name: file.name || 'unnamed',
       type,
-      size: file.size || 'unknown',
-      uri: file.uri
+      uri: file.uri.substring(0, 50) + '...'
     });
 
     try {
-      const fileInfo = await FileSystem.getInfoAsync(file.uri, { size: true });
-      if (!fileInfo.exists) throw new Error(`File not found: ${file.uri}`);
-      if (fileInfo.size === 0) throw new Error('Empty file');
-
       const formData = new FormData();
       formData.append('file', {
         uri: file.uri,
@@ -83,16 +78,14 @@ export default function PetDetail() {
       const data = await response.json();
       console.log('[Cloudinary] Upload success!', {
         public_id: data.public_id,
-        type,
-        size: fileInfo.size
+        type
       });
       return data;
     } catch (error) {
       console.error('[Cloudinary] UPLOAD FAILED:', {
         error: error.message,
         file: file.name,
-        type,
-        uri: file.uri
+        type
       });
       throw error;
     }

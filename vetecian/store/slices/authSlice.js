@@ -1,863 +1,76 @@
-// import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-// import { authAPI } from '../../services/authService';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// // Async thunks for authentication
-// export const signInUser = createAsyncThunk(
-//   'auth/signIn',
-//   async ({ email, password, loginType }, { rejectWithValue }) => {
-//     console.log('🔄 REDUX - signInUser thunk started');
-//     console.log('📋 REDUX - signInUser params:', {
-//       email: email,
-//       password: password ? '***PROVIDED***' : 'MISSING',
-//       loginType: loginType
-//     });
-    
-//     try {
-//       console.log('🌐 REDUX - Calling authAPI.signIn...');
-//       const response = await authAPI.signIn(email, password, loginType);
-      
-//       console.log('✅ REDUX - authAPI.signIn successful');
-//       console.log('📄 REDUX - API Response:', {
-//         success: response.success,
-//         message: response.message,
-//         hasUser: !!response.user,
-//         hasToken: !!response.token,
-//         userId: response.user?._id,
-//         userRole: response.user?.role
-//       });
-      
-//       if (response.user && response.user._id) {
-//         console.log('💾 REDUX - Saving userId to AsyncStorage:', response.user._id);
-//         await AsyncStorage.setItem('userId', response.user._id);
-//         console.log('✅ REDUX - userId saved to AsyncStorage');
-//       } else {
-//         console.log('⚠️ REDUX - No user._id in response, cannot save to AsyncStorage');
-//       }
-      
-//       return response;
-//     } catch (error) {
-//       console.log('❌ REDUX - signInUser error:', error);
-//       console.log('❌ REDUX - Error message:', error.message);
-//       console.log('❌ REDUX - Error type:', typeof error);
-      
-//       return rejectWithValue(error.message || 'Sign in failed');
-//     }
-//   }
-// );
-
-// export const signUpUser = createAsyncThunk(
-//   'auth/signUp',
-//   async ({ name, email, password, role = 'vetician' }, { rejectWithValue }) => {
-//     console.log('🔄 REDUX - signUpUser thunk started');
-//     console.log('📋 REDUX - signUpUser params:', {
-//       name: name,
-//       email: email,
-//       password: password ? '***PROVIDED***' : 'MISSING',
-//       role: role
-//     });
-    
-//     try {
-//       console.log('🌐 REDUX - Calling authAPI.signUp...');
-//       const response = await authAPI.signUp(name, email, password, role);
-      
-//       console.log('✅ REDUX - authAPI.signUp successful');
-//       console.log('📄 REDUX - API Response:', {
-//         success: response.success,
-//         message: response.message,
-//         hasUser: !!response.user,
-//         hasToken: !!response.token,
-//         userId: response.user?._id,
-//         userRole: response.user?.role
-//       });
-      
-//       if (response.user && response.user._id) {
-//         console.log('💾 REDUX - Saving userId to AsyncStorage:', response.user._id);
-//         await AsyncStorage.setItem('userId', response.user._id);
-//         console.log('✅ REDUX - userId saved to AsyncStorage');
-//       } else {
-//         console.log('⚠️ REDUX - No user._id in response, cannot save to AsyncStorage');
-//       }
-      
-//       return response;
-//     } catch (error) {
-//       console.log('❌ REDUX - signUpUser error:', error);
-//       console.log('❌ REDUX - Error message:', error.message);
-//       console.log('❌ REDUX - Error type:', typeof error);
-      
-//       return rejectWithValue(error.message || 'Sign up failed');
-//     }
-//   }
-// );
-
-// export const parentUser = createAsyncThunk(
-//   'auth/parent',
-//   async ({ name, email, phone, address, gender, image }, { rejectWithValue }) => {
-//     const userId = await AsyncStorage.getItem('userId');
-//     if (!userId) {
-//       return rejectWithValue({
-//         error: {
-//           message: 'User not authenticated',
-//           code: 401
-//         },
-//         success: false
-//       });
-//     }
-//     try {
-//       const response = await authAPI.parent(name, email, phone, address, gender, image, userId);
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Parent register failed');
-//     }
-//   }
-// );
-
-// export const updateParent = createAsyncThunk(
-//   'auth/updateParent',
-//   async (parentData, { rejectWithValue }) => {
-//     try {
-//       const userId = await AsyncStorage.getItem('userId');
-//       if (!userId) {
-//         return rejectWithValue('User not authenticated');
-//       }
-
-//       const response = await authAPI.updateParent(userId, parentData);
-//       if (!response.success) {
-//         return rejectWithValue(response.message || 'Failed to update parent profile');
-//       }
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Failed to update parent profile');
-//     }
-//   }
-// );
-
-// export const getParent = createAsyncThunk(
-//   'auth/getParent',
-//   async (userId, { rejectWithValue }) => {
-//     try {
-//       if (!userId) {
-//         throw new Error('User ID is required');
-//       }
-//       const response = await authAPI.getParent(userId);
-//       if (!response.success) {
-//         throw new Error(response.message || 'Failed to fetch parent data');
-//       }
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Failed to load parent data');
-//     }
-//   }
-// );
-
-// export const veterinarianUser = createAsyncThunk(
-//   'auth/veterinarian',
-//   async ({
-//     title,
-//     name,
-//     gender,
-//     city,
-//     experience,
-//     specialization,
-//     profilePhotoUrl,
-//     qualification,
-//     qualificationUrl,
-//     registration,
-//     registrationUrl,
-//     identityProof,
-//     identityProofUrl
-//   }, { rejectWithValue }) => {
-//     try {
-//       const response = await authAPI.veterinarian(
-//         title,
-//         name,
-//         gender,
-//         city,
-//         experience,
-//         specialization,
-//         profilePhotoUrl,
-//         qualification,
-//         qualificationUrl,
-//         registration,
-//         registrationUrl,
-//         identityProof,
-//         identityProofUrl
-//       );
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message || 'Veterinarian registration failed');
-//     }
-//   }
-// );
-
-// export const registerPet = createAsyncThunk(
-//   'auth/pet',
-//   async (petData, { rejectWithValue }) => {
-//     try {
-//       // Required fields validation
-//       if (!petData.name || !petData.species || !petData.gender) {
-//         throw new Error('Missing required information');
-//       }
-
-//       // Validate date format if provided
-//       if (petData.dob && !isValidDate(petData.dob)) {
-//         throw new Error('Invalid date format. Please use YYYY-MM-DD');
-//       }
-
-//       // Prepare numeric fields
-//       const numericFields = ['height', 'weight'];
-//       const processedData = { ...petData };
-
-//       numericFields.forEach(field => {
-//         if (processedData[field]) {
-//           processedData[field] = Number(processedData[field]);
-//           if (isNaN(processedData[field])) {
-//             throw new Error(`${field} must be a valid number`);
-//           }
-//         }
-//       });
-//       console.log("ProcessedData =>", processedData)
-
-//       return await authAPI.pet(processedData);
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message || 'Pet registration failed');
-//     }
-//   }
-// );
-
-// export const updatePet = createAsyncThunk(
-//   'auth/updatePet',
-//   async ({ petId, petData }, { rejectWithValue }) => {
-//     try {
-//       // Required fields validation
-//       if (!petData.name || !petData.species || !petData.gender) {
-//         throw new Error('Name, species and gender are required');
-//       }
-
-//       // Validate date format if provided
-//       if (petData.dob && !isValidDate(petData.dob)) {
-//         throw new Error('Invalid date format. Please use YYYY-MM-DD');
-//       }
-
-//       // Prepare numeric fields
-//       const numericFields = ['height', 'weight'];
-//       const processedData = { ...petData };
-
-//       numericFields.forEach(field => {
-//         if (processedData[field]) {
-//           processedData[field] = Number(processedData[field]);
-//           if (isNaN(processedData[field])) {
-//             throw new Error(`${field} must be a valid number`);
-//           }
-//         }
-//       });
-
-//       const response = await authAPI.updatePet(petId, processedData);
-//       if (!response.success) {
-//         throw new Error(response.message || 'Failed to update pet');
-//       }
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message || 'Failed to update pet');
-//     }
-//   }
-// );
-
-// export const getPetsByUserId = createAsyncThunk(
-//   'auth/getPetsByUserId',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await authAPI.getPetsByUserId();
-//       if (!response.success) {
-//         return rejectWithValue(response.message || 'Failed to fetch pets');
-//       }
-//       return response.pets;
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Failed to load pets data');
-//     }
-//   }
-// );
-
-// export const registerClinic = createAsyncThunk(
-//   'auth/clinic',
-//   async (clinicData, { rejectWithValue }) => {
-//     try {
-//       // Required field validation
-//       if (!clinicData.clinicName?.trim() || !clinicData.city?.trim() || !clinicData.streetAddress?.trim()) {
-//         return rejectWithValue({
-//           error: {
-//             message: 'Clinic name, city, and address are required',
-//             code: 400
-//           },
-//           success: false
-//         });
-//       }
-
-//       if (!clinicData.ownerProof) {
-//         return rejectWithValue({
-//           error: {
-//             message: 'Owner proof documentation is required',
-//             code: 400
-//           },
-//           success: false
-//         });
-//       }
-
-//       const userId = await AsyncStorage.getItem('userId');
-//       if (!userId) {
-//         return rejectWithValue({
-//           error: {
-//             message: 'User not authenticated',
-//             code: 401
-//           },
-//           success: false
-//         });
-//       }
-
-//       const response = await authAPI.clinic({
-//         ...clinicData,
-//         userId,
-//         status: 'pending'
-//       });
-
-//       if (!response.success) {
-//         return rejectWithValue(response); // Pass through the entire error response
-//       }
-
-//       return response;
-
-//     } catch (error) {
-//       return rejectWithValue({
-//         error: {
-//           message: error.response?.data?.error?.message ||
-//             error.message ||
-//             'Clinic registration failed',
-//           code: error.response?.status || 500
-//         },
-//         success: false
-//       });
-//     }
-//   }
-// );
-
-// export const refreshToken = createAsyncThunk(
-//   'auth/refreshToken',
-//   async (_, { getState, rejectWithValue }) => {
-//     const { refreshToken } = getState().auth;
-//     if (!refreshToken) {
-//       return rejectWithValue('No refresh token available');
-//     }
-//     try {
-//       const response = await authAPI.refreshToken(refreshToken);
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue('Session expired. Please login again.');
-//     }
-//   }
-// );
-
-// export const checkVeterinarianVerification = createAsyncThunk(
-//   'auth/checkVeterinarianVerification',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const userId = await AsyncStorage.getItem('userId');
-//       if (!userId) {
-//         throw new Error('User not authenticated');
-//       }
-
-//       const response = await authAPI.veterinarianCheck(userId);
-
-//       if (!response.success) {
-//         throw new Error(response.message || 'Verification check failed');
-//       }
-
-//       return {
-//         isVerified: response.data.profile.isVerified,
-//         message: response.data.profile.message,
-//         veterinarianData: response.data.profile.veterinarian
-//       };
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message || 'Verification check failed');
-//     }
-//   }
-// );
-
-// export const checkClinicVerification = createAsyncThunk(
-//   'auth/checkClinicVerification',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const userId = await AsyncStorage.getItem('userId');
-//       if (!userId) {
-//         throw new Error('User not authenticated');
-//       }
-
-//       const response = await authAPI.clinicVerificationCheck(userId);
-
-//       if (!response.success) {
-//         throw new Error(response.message || 'Clinic verification check failed');
-//       }
-
-//       return {
-//         isVerified: response.isVerified,
-//         message: response.message,
-//         clinicData: response.clinic,
-//         status: response.status
-//       };
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message || 'Clinic verification check failed');
-//     }
-//   }
-// );
-
-// export const veterinarianProfileData = createAsyncThunk(
-//   'auth/veterinarianProfile',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const userId = await AsyncStorage.getItem('userId')
-//       if (!userId) {
-//         throw new Error('User not authenticated');
-//       }
-//       const response = await authAPI.veterinarianCheck(userId);
-//       if (!response.success) {
-//         return rejectWithValue(response.message || 'Failed to fetch profile data');
-//       }
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Failed to load profile data');
-//     }
-//   }
-// );
-
-// export const getAllVerifiedClinics = createAsyncThunk(
-//   'auth/getAllVerifiedClinics',
-//   async (_, { rejectWithValue }) => {
-//     try {
-//       const response = await authAPI.getAllVerifiedClinics();
-//       if (!response.success) {
-//         return rejectWithValue(response.message || 'Failed to fetch clinics');
-//       }
-//       return response.data; // Assuming response.data contains the clinics array
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Failed to load clinics data');
-//     }
-//   }
-// );
-
-// export const petResortDetail = createAsyncThunk(
-//   'auth/petResort',
-//   async (resortdetail, { rejectWithValue }) => {
-//     try {
-//       console.log(resortdetail)
-//       const response = await authAPI.petResort(resortdetail);
-//       if (!response.success) {
-//         return rejectWithValue(response.message || 'Failed to fetch profile data');
-//       }
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.message || 'Failed to load profile data');
-//     }
-//   }
-// );
-
-// export const bookAppointment = createAsyncThunk(
-//   'auth/bookAppointment',
-//   async (bookingData, { rejectWithValue }) => {
-//     try {
-//       const response = await authAPI.bookAppointment(bookingData);
-
-//       if (!response.success) {
-//         return rejectWithValue(response.message || 'Booking failed');
-//       }
-
-//       return response;
-//     } catch (error) {
-//       return rejectWithValue(error.response?.data?.message || error.message || 'Booking failed');
-//     }
-//   }
-// );
-
-// const initialState = {
-//   user: null,
-//   token: null,
-//   refreshToken: null,
-//   isAuthenticated: false,
-//   isLoading: false,
-//   error: null,
-//   signUpSuccess: false,
-//   veterinarianVerification: null,
-//   clinicVerification: null,
-//   clinicRegistrationStatus: null,
-//   veterinarianProfile: {
-//     loading: false,
-//     error: null,
-//     data: null
-//   },
-//   verifiedClinics: {
-//     loading: false,
-//     error: null,
-//     data: null
-//   },
-//   bookingStatus: {
-//     loading: false,
-//     error: null,
-//     success: false,
-//     data: null
-//   },
-//   userPets: {
-//     loading: false,
-//     error: null,
-//     data: null
-//   },
-//   parentData: {
-//     loading: false,
-//     error: null,
-//     data: null
-//   }
-// };
-
-// const authSlice = createSlice({
-//   name: 'auth',
-//   initialState,
-//   reducers: {
-//     signOut: (state) => {
-//       state.user = null;
-//       state.token = null;
-//       state.refreshToken = null;
-//       state.isAuthenticated = false;
-//       state.error = null;
-//       state.veterinarianVerification = null;
-//       state.clinicVerification = null;
-//       state.veterinarianProfile = initialState.veterinarianProfile;
-//       state.bookingStatus = initialState.bookingStatus;
-//       state.parentData = initialState.parentData;
-//     },
-//     clearError: (state) => {
-//       state.error = null;
-//     },
-//     updateUser: (state, action) => {
-//       state.user = { ...state.user, ...action.payload };
-//     },
-//     resetClinicRegistration: (state) => {
-//       state.clinicRegistrationStatus = null;
-//     },
-//     clearVeterinarianProfile: (state) => {
-//       state.veterinarianProfile = initialState.veterinarianProfile;
-//     },
-//     resetBookingStatus: (state) => {
-//       state.bookingStatus = initialState.bookingStatus;
-//     },
-//     clearUserPets: (state) => {
-//       state.userPets = initialState.userPets;
-//     }
-//   },
-//   extraReducers: (builder) => {
-//     builder
-//       // Sign In
-//       .addCase(signInUser.pending, (state) => {
-//         state.isLoading = true;
-//         state.error = null;
-//       })
-//       .addCase(signInUser.fulfilled, (state, action) => {
-//         state.isLoading = false;
-//         state.user = action.payload.user;
-//         state.token = action.payload.token;
-//         state.refreshToken = action.payload.refreshToken;
-//         state.isAuthenticated = true;
-//         state.error = null;
-//       })
-//       .addCase(signInUser.rejected, (state, action) => {
-//         state.isLoading = false;
-//         state.error = action.payload;
-//         state.isAuthenticated = false;
-//       })
-
-//       // Sign Up
-//       .addCase(signUpUser.pending, (state) => {
-//         state.isLoading = true;
-//         state.error = null;
-//       })
-//       .addCase(signUpUser.fulfilled, (state, action) => {
-//         state.isLoading = false;
-//         state.user = action.payload.user;
-//         state.token = action.payload.token;
-//         state.refreshToken = action.payload.refreshToken;
-//         state.isAuthenticated = true;
-//         state.error = null;
-//       })
-//       .addCase(signUpUser.rejected, (state, action) => {
-//         state.isLoading = false;
-//         state.error = action.payload;
-//         state.isAuthenticated = false;
-//       })
-
-//       // Get Parent Data
-//       .addCase(getParent.pending, (state) => {
-//         state.parentData = {
-//           loading: true,
-//           error: null,
-//           data: null
-//         };
-//       })
-//       .addCase(getParent.fulfilled, (state, action) => {
-//         state.parentData = {
-//           loading: false,
-//           error: null,
-//           data: action.payload
-//         };
-//       })
-//       .addCase(getParent.rejected, (state, action) => {
-//         state.parentData = {
-//           loading: false,
-//           error: action.payload,
-//           data: null
-//         };
-//       })
-
-//       // Update Parent Data
-//       .addCase(updateParent.pending, (state) => {
-//         state.parentData = {
-//           ...state.parentData,
-//           loading: true,
-//           error: null
-//         };
-//       })
-//       .addCase(updateParent.fulfilled, (state, action) => {
-//         state.parentData = {
-//           loading: false,
-//           error: null,
-//           data: action.payload
-//         };
-//         // Update user data if needed
-//         if (state.user) {
-//           state.user = {
-//             ...state.user,
-//             name: action.payload.data?.name || state.user.name,
-//             email: action.payload.data?.email || state.user.email
-//           };
-//         }
-//       })
-//       .addCase(updateParent.rejected, (state, action) => {
-//         state.parentData = {
-//           ...state.parentData,
-//           loading: false,
-//           error: action.payload
-//         };
-//       })
-
-//       // Update Pet Data
-//       .addCase(updatePet.pending, (state) => {
-//         state.userPets = {
-//           ...state.userPets,
-//           loading: true,
-//           error: null
-//         };
-//       })
-//       .addCase(updatePet.fulfilled, (state, action) => {
-//         state.userPets = {
-//           ...state.userPets,
-//           loading: false,
-//           error: null
-//         };
-//         // Optionally update the pets data in the state if needed
-//         if (state.userPets.data) {
-//           const updatedPets = state.userPets.data.map(pet => 
-//             pet._id === action.payload.data._id ? action.payload.data : pet
-//           );
-//           state.userPets.data = updatedPets;
-//         }
-//       })
-//       .addCase(updatePet.rejected, (state, action) => {
-//         state.userPets = {
-//           ...state.userPets,
-//           loading: false,
-//           error: action.payload
-//         };
-//       })
-
-//       // Refresh Token
-//       .addCase(refreshToken.pending, (state) => {
-//         state.isLoading = true;
-//       })
-//       .addCase(refreshToken.fulfilled, (state, action) => {
-//         state.isLoading = false;
-//         state.token = action.payload.token;
-//         state.refreshToken = action.payload.refreshToken;
-//         state.error = null;
-//       })
-//       .addCase(refreshToken.rejected, (state, action) => {
-//         state.isLoading = false;
-//         state.error = action.payload;
-//         state.user = null;
-//         state.token = null;
-//         state.refreshToken = null;
-//         state.isAuthenticated = false;
-//       })
-
-//       // Check Veterinarian Verification
-//       .addCase(checkVeterinarianVerification.pending, (state) => {
-//         state.isLoading = true;
-//         state.error = null;
-//       })
-//       .addCase(checkVeterinarianVerification.fulfilled, (state, action) => {
-//         state.isLoading = false;
-//         state.veterinarianVerification = action.payload;
-//         state.error = null;
-//       })
-//       .addCase(checkVeterinarianVerification.rejected, (state, action) => {
-//         state.isLoading = false;
-//         state.error = action.payload;
-//       })
-
-//       // Register Clinic
-//       .addCase(registerClinic.pending, (state) => {
-//         state.isLoading = true;
-//         state.error = null;
-//         state.clinicRegistrationStatus = null;
-//       })
-//       .addCase(registerClinic.fulfilled, (state, action) => {
-//         state.isLoading = false;
-//         state.clinicRegistrationStatus = 'success';
-//         state.error = null;
-//         if (state.user) {
-//           state.user.role = 'clinic_owner';
-//         }
-//       })
-//       .addCase(registerClinic.rejected, (state, action) => {
-//         state.isLoading = false;
-//         state.error = action.payload;
-//         state.clinicRegistrationStatus = 'failed';
-//       })
-
-//       // Check Clinic Verification
-//       .addCase(checkClinicVerification.pending, (state) => {
-//         state.isLoading = true;
-//         state.error = null;
-//       })
-//       .addCase(checkClinicVerification.fulfilled, (state, action) => {
-//         state.isLoading = false;
-//         state.clinicVerification = action.payload;
-//         state.error = null;
-//       })
-//       .addCase(checkClinicVerification.rejected, (state, action) => {
-//         state.isLoading = false;
-//         state.error = action.payload;
-//       })
-
-//       // Veterinarian Profile Data
-//       .addCase(veterinarianProfileData.pending, (state) => {
-//         state.veterinarianProfile = {
-//           ...state.veterinarianProfile,
-//           loading: true,
-//           error: null
-//         };
-//       })
-//       .addCase(veterinarianProfileData.fulfilled, (state, action) => {
-//         state.veterinarianProfile = {
-//           loading: false,
-//           error: null,
-//           data: action.payload.data
-//         };
-//       })
-//       .addCase(veterinarianProfileData.rejected, (state, action) => {
-//         state.veterinarianProfile = {
-//           ...state.veterinarianProfile,
-//           loading: false,
-//           error: action.payload
-//         };
-//       })
-
-//       // Get All Verified Clinics
-//       .addCase(getAllVerifiedClinics.pending, (state) => {
-//         state.verifiedClinics = {
-//           ...state.verifiedClinics,
-//           loading: true,
-//           error: null
-//         };
-//       })
-//       .addCase(getAllVerifiedClinics.fulfilled, (state, action) => {
-//         state.verifiedClinics = {
-//           loading: false,
-//           error: null,
-//           data: action.payload
-//         };
-//       })
-//       .addCase(getAllVerifiedClinics.rejected, (state, action) => {
-//         state.verifiedClinics = {
-//           ...state.verifiedClinics,
-//           loading: false,
-//           error: action.payload
-//         };
-//       })
-
-//       // Book Appointment
-//       .addCase(bookAppointment.pending, (state) => {
-//         state.bookingStatus = {
-//           loading: true,
-//           error: null,
-//           success: false,
-//           data: null
-//         };
-//       })
-//       .addCase(bookAppointment.fulfilled, (state, action) => {
-//         state.bookingStatus = {
-//           loading: false,
-//           error: null,
-//           success: true,
-//           data: action.payload
-//         };
-//       })
-//       .addCase(bookAppointment.rejected, (state, action) => {
-//         state.bookingStatus = {
-//           loading: false,
-//           error: action.payload,
-//           success: false,
-//           data: null
-//         };
-//       })
-
-//       // Get Pets By User ID
-//       .addCase(getPetsByUserId.pending, (state) => {
-//         state.userPets.loading = true;
-//         state.userPets.error = null;
-//       })
-//       .addCase(getPetsByUserId.fulfilled, (state, action) => {
-//         state.userPets.loading = false;
-//         state.userPets.error = null;
-//         state.userPets.data = action.payload;
-//       })
-//       .addCase(getPetsByUserId.rejected, (state, action) => {
-//         state.userPets.loading = false;
-//         state.userPets.error = action.payload;
-//       });
-//   },
-// });
-
-// function isValidDate(dateString) {
-//   const regEx = /^\d{4}-\d{2}-\d{2}$/;
-//   if (!dateString.match(regEx)) return false;
-//   const d = new Date(dateString);
-//   return d instanceof Date && !isNaN(d);
-// }
-
-// export const {
-//   signOut,
-//   clearError,
-//   updateUser,
-//   resetClinicRegistration,
-//   clearVeterinarianProfile,
-//   resetBookingStatus,
-//   clearUserPets
-// } = authSlice.actions;
-// export default authSlice.reducer;
-
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 /* =========================
-   Helper Functions
+    Helper Functions
 ========================= */
 const getApiBaseUrl = () => {
-  return process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.46:3000/api';
+  // ✅ Use local backend for faster response
+  return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+};
+
+// Debug helper function
+export const debugAuthState = createAsyncThunk(
+  'auth/debugAuthState',
+  async (_, { getState }) => {
+    const state = getState();
+    const userId = await AsyncStorage.getItem('userId');
+    const token = await AsyncStorage.getItem('token');
+    
+    console.log('🔍=== AUTH DEBUG STATE ===');
+    console.log('Redux State:', {
+      isAuthenticated: state.auth.isAuthenticated,
+      hasUser: !!state.auth.user,
+      hasToken: !!state.auth.token,
+      userId: state.auth.user?._id
+    });
+    console.log('AsyncStorage:', {
+      userId: userId || 'Not found',
+      token: token ? 'Found' : 'Not found'
+    });
+    console.log('🔍=== END DEBUG ===');
+    
+    return { userId, token, reduxState: state.auth };
+  }
+);
+
+// ✅ Naya Helper: Ye headers har request mein CORS aur Ngrok ko bypass karenge
+const getCommonHeaders = async (includeAuth = false) => {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // ✅ Sabse important line for Ngrok CORS
+  };
+  
+  if (includeAuth) {
+    // Try to get token from AsyncStorage first
+    let token = await AsyncStorage.getItem('token');
+    console.log('🔍 Token from AsyncStorage:', token ? 'Found' : 'Not found');
+    
+    // If no token in AsyncStorage, try to get from Redux store (fallback)
+    if (!token) {
+      try {
+        // This is a fallback - ideally token should be in AsyncStorage
+        const storedState = await AsyncStorage.getItem('persist:auth');
+        if (storedState) {
+          const parsedState = JSON.parse(storedState);
+          token = parsedState.token ? JSON.parse(parsedState.token) : null;
+          console.log('🔍 Token from Redux persist:', token ? 'Found' : 'Not found');
+        }
+      } catch (e) {
+        console.log('❌ Error getting token from Redux persist:', e.message);
+      }
+    }
+    
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+      console.log('✅ Authorization header added');
+    } else {
+      console.log('❌ No token found anywhere - user might not be logged in');
+    }
+  }
+  
+  return headers;
 };
 
 function isValidDate(dateString) {
@@ -868,26 +81,88 @@ function isValidDate(dateString) {
 }
 
 /* =========================
-   Authentication Thunks
+    Authentication Thunks
 ========================= */
+
+// Sign out thunk to handle async operations
+export const signOutUser = createAsyncThunk(
+  'auth/signOut',
+  async (_, { rejectWithValue }) => {
+    console.log('🔴 signOutUser thunk called');
+    try {
+      const token = await AsyncStorage.getItem('token');
+      console.log('🔍 Token before logout:', token ? 'Found' : 'Not found');
+      
+      const BASE_URL = getApiBaseUrl();
+      
+      if (token) {
+        console.log('🔍 Calling backend logout API...');
+        // Call backend logout API
+        const headers = await getCommonHeaders(true);
+        const response = await fetch(`${BASE_URL}/auth/logout`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ refreshToken: token })
+        });
+        console.log('🔍 Backend logout response:', response.status);
+      }
+      
+      // Clear AsyncStorage
+      console.log('🔍 Clearing AsyncStorage...');
+      await AsyncStorage.multiRemove(['userId', 'token']);
+      console.log('✅ AsyncStorage cleared');
+      
+      return true;
+    } catch (error) {
+      console.log('❌ Logout API error:', error);
+      // Even if API fails, clear local storage
+      await AsyncStorage.multiRemove(['userId', 'token']);
+      console.log('✅ AsyncStorage cleared (fallback)');
+      return true;
+    }
+  }
+);
+
 export const signInUser = createAsyncThunk(
   'auth/signIn',
   async ({ email, password, loginType }, { rejectWithValue }) => {
     try {
       const BASE_URL = getApiBaseUrl();
+      const headers = await getCommonHeaders(false); // No auth needed for login
+      
+      console.log('🔍 Making request to:', `${BASE_URL}/auth/login`);
+      console.log('🔍 Request headers:', headers);
+      
       const res = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        headers,
         body: JSON.stringify({ email, password, loginType }),
       });
+      
+      console.log('🔍 Response status:', res.status);
+      console.log('🔍 Response headers:', Object.fromEntries(res.headers.entries()));
+      
+      const responseText = await res.text();
+      console.log('🔍 Raw response:', responseText.substring(0, 200));
+      
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text}`);
+        throw new Error(`HTTP ${res.status}: ${responseText}`);
       }
-      const data = await res.json();
+      
+      // Try to parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.log('❌ JSON parse error:', parseError);
+        throw new Error(`Server returned non-JSON response: ${responseText.substring(0, 100)}`);
+      }
+      
       if (data.user?._id) await AsyncStorage.setItem('userId', data.user._id);
       return data;
     } catch (error) {
+      console.log('❌ Full error:', error);
       return rejectWithValue(error.message || 'Sign in failed');
     }
   }
@@ -898,9 +173,10 @@ export const signUpUser = createAsyncThunk(
   async ({ name, email, password, role = 'vetician' }, { rejectWithValue }) => {
     try {
       const BASE_URL = getApiBaseUrl();
+      const headers = await getCommonHeaders(false); // No auth needed for signup
       const res = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ name, email, password, role }),
       });
       if (!res.ok) {
@@ -917,15 +193,43 @@ export const signUpUser = createAsyncThunk(
 );
 
 /* =========================
-   Parent Thunks
+    Parent Thunks
 ========================= */
+export const parentUser = createAsyncThunk(
+  'auth/parentUser',
+  async (parentData, { rejectWithValue }) => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) throw new Error('User not authenticated');
+      
+      const BASE_URL = getApiBaseUrl();
+      const headers = await getCommonHeaders(true);
+      const res = await fetch(`${BASE_URL}/auth/parent-register`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ...parentData, userId }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+      return await res.json();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to save parent data');
+    }
+  }
+);
+
 export const getParent = createAsyncThunk(
   'auth/getParent',
   async (userId, { rejectWithValue }) => {
     try {
       if (!userId) throw new Error('User ID is required');
       const BASE_URL = getApiBaseUrl();
-      const res = await fetch(`${BASE_URL}/auth/parent/${userId}`);
+      const headers = await getCommonHeaders(true);
+      const res = await fetch(`${BASE_URL}/auth/parents/${userId}`, {
+        headers,
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (error) {
@@ -941,9 +245,10 @@ export const updateParent = createAsyncThunk(
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return rejectWithValue('User not authenticated');
       const BASE_URL = getApiBaseUrl();
+      const headers = await getCommonHeaders(true); // Include auth for update
       const res = await fetch(`${BASE_URL}/auth/parent/${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(parentData),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -955,65 +260,74 @@ export const updateParent = createAsyncThunk(
 );
 
 /* =========================
-   Pet Thunks
+    Clinic Thunks
 ========================= */
-export const registerPet = createAsyncThunk(
-  'auth/pet',
-  async (petData, { rejectWithValue }) => {
+export const getAllVerifiedClinics = createAsyncThunk(
+  'auth/getAllVerifiedClinics',
+  async (_, { rejectWithValue }) => {
     try {
-      if (!petData.name || !petData.species || !petData.gender)
-        throw new Error('Missing required information');
-      if (petData.dob && !isValidDate(petData.dob))
-        throw new Error('Invalid date format. Use YYYY-MM-DD');
-
-      ['height', 'weight'].forEach(field => {
-        if (petData[field]) {
-          petData[field] = Number(petData[field]);
-          if (isNaN(petData[field])) throw new Error(`${field} must be a number`);
-        }
-      });
-
-      const userId = await AsyncStorage.getItem('userId');
       const BASE_URL = getApiBaseUrl();
-      const res = await fetch(`${BASE_URL}/auth/pet`, {
+      const headers = await getCommonHeaders(false);
+      const res = await fetch(`${BASE_URL}/auth/petparent/verified/all-clinic`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...petData, userId }),
+        headers,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      const data = await res.json();
+      return data.data || [];
     } catch (error) {
-      return rejectWithValue(error.message || 'Pet registration failed');
+      return rejectWithValue(error.message || 'Failed to load clinics');
     }
   }
 );
 
-export const updatePet = createAsyncThunk(
-  'auth/updatePet',
-  async ({ petId, petData }, { rejectWithValue }) => {
+/* =========================
+    Pet Thunks
+========================= */
+export const registerPet = createAsyncThunk(
+  'auth/pet',
+  async (petData, { rejectWithValue, getState }) => {
     try {
       if (!petData.name || !petData.species || !petData.gender)
-        throw new Error('Name, species and gender are required');
-      if (petData.dob && !isValidDate(petData.dob))
-        throw new Error('Invalid date format. Use YYYY-MM-DD');
-
-      ['height', 'weight'].forEach(field => {
-        if (petData[field]) {
-          petData[field] = Number(petData[field]);
-          if (isNaN(petData[field])) throw new Error(`${field} must be a number`);
-        }
+        throw new Error('Missing required information');
+      
+      const userId = await AsyncStorage.getItem('userId');
+      console.log('🔍 registerPet - userId:', userId);
+      
+      // Debug: Check current auth state
+      const state = getState();
+      console.log('🔍 registerPet - Auth state:', {
+        isAuthenticated: state.auth.isAuthenticated,
+        hasUser: !!state.auth.user,
+        hasToken: !!state.auth.token
       });
-
+      
       const BASE_URL = getApiBaseUrl();
-      const res = await fetch(`${BASE_URL}/auth/pet/${petId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(petData),
+      const headers = await getCommonHeaders(true); // ✅ Include auth token
+      
+      console.log('🔍 registerPet - Request headers:', Object.keys(headers));
+      console.log('🔍 registerPet - Has Authorization header:', !!headers.Authorization);
+      
+      const res = await fetch(`${BASE_URL}/parents/pets`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ ...petData, userId }),
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      
+      console.log('🔍 registerPet - Response status:', res.status);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.log('❌ registerPet - Error response:', errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+      
+      const result = await res.json();
+      console.log('✅ registerPet - Success:', result);
+      return result;
     } catch (error) {
-      return rejectWithValue(error.message || 'Failed to update pet');
+      console.log('❌ registerPet - Error:', error.message);
+      return rejectWithValue(error.message || 'Pet registration failed');
     }
   }
 );
@@ -1024,7 +338,10 @@ export const getPetsByUserId = createAsyncThunk(
     try {
       const userId = await AsyncStorage.getItem('userId');
       const BASE_URL = getApiBaseUrl();
-      const res = await fetch(`${BASE_URL}/auth/pets/${userId}`);
+      const headers = await getCommonHeaders(true); // ✅ Include auth token
+      const res = await fetch(`${BASE_URL}/parents/pets/${userId}`, {
+        headers,
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       return data.pets || [];
@@ -1034,26 +351,49 @@ export const getPetsByUserId = createAsyncThunk(
   }
 );
 
+export const updatePet = createAsyncThunk(
+  'auth/updatePet',
+  async ({ petId, petData }, { rejectWithValue }) => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      const BASE_URL = getApiBaseUrl();
+      const headers = await getCommonHeaders(true);
+      const res = await fetch(`${BASE_URL}/auth/users/${userId}/pets/${petId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(petData),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to update pet');
+    }
+  }
+);
+
 /* =========================
-   Slice & Reducers
+    Slice & Reducers (Same as before)
 ========================= */
 const initialState = {
   user: null,
   token: null,
   refreshToken: null,
   isAuthenticated: false,
-  isLoading: false,
+  isLoading: false, // Make sure this starts as false
   error: null,
   signUpSuccess: false,
   userPets: { loading: false, error: null, data: [] },
   parentData: { loading: false, error: null, data: null },
+  clinics: { loading: false, error: null, data: [] },
+  verifiedClinics: { loading: false, error: null, data: [] },
 };
 
 const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    signOut: state => {
+    signOut: (state) => {
+      // Clear all auth state immediately
       state.user = null;
       state.token = null;
       state.refreshToken = null;
@@ -1061,13 +401,18 @@ const authSlice = createSlice({
       state.error = null;
       state.userPets = initialState.userPets;
       state.parentData = initialState.parentData;
-      AsyncStorage.removeItem('userId');
+      state.clinics = initialState.clinics;
+      state.verifiedClinics = initialState.verifiedClinics;
+      console.log('✅ Redux state cleared by synchronous signOut');
     },
     clearError: state => { state.error = null; },
+    clearLoading: state => { 
+      state.isLoading = false; 
+      console.log('✅ Loading state cleared');
+    },
   },
   extraReducers: builder => {
     builder
-      // Sign In
       .addCase(signInUser.pending, state => { state.isLoading = true; state.error = null; })
       .addCase(signInUser.fulfilled, (state, action) => {
         state.isLoading = false;
@@ -1075,46 +420,113 @@ const authSlice = createSlice({
         state.token = action.payload.token;
         state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.error = null;
+        // ✅ Store token in AsyncStorage for API calls
+        console.log('🔍 Login response token:', action.payload.token ? 'Present' : 'Missing');
+        if (action.payload.token) {
+          // Store token immediately and synchronously
+          AsyncStorage.setItem('token', action.payload.token).then(() => {
+            console.log('✅ Token stored in AsyncStorage successfully');
+          }).catch(err => {
+            console.log('❌ Failed to store token:', err);
+          });
+        } else {
+          console.log('❌ No token in login response');
+        }
       })
       .addCase(signInUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        state.isAuthenticated = false;
       })
-
-      // Sign Up
-      .addCase(signUpUser.pending, state => { state.isLoading = true; state.error = null; })
       .addCase(signUpUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
-        state.refreshToken = action.payload.refreshToken;
         state.isAuthenticated = true;
-        state.error = null;
+        // ✅ Store token in AsyncStorage for API calls
+        console.log('🔍 Signup response token:', action.payload.token ? 'Present' : 'Missing');
+        if (action.payload.token) {
+          // Store token immediately and synchronously
+          AsyncStorage.setItem('token', action.payload.token).then(() => {
+            console.log('✅ Token stored in AsyncStorage successfully');
+          }).catch(err => {
+            console.log('❌ Failed to store token:', err);
+          });
+        } else {
+          console.log('❌ No token in signup response');
+        }
       })
-      .addCase(signUpUser.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
+      .addCase(signOutUser.fulfilled, (state) => {
+        // Clear all auth state
+        state.user = null;
+        state.token = null;
+        state.refreshToken = null;
         state.isAuthenticated = false;
+        state.error = null;
+        state.userPets = initialState.userPets;
+        state.parentData = initialState.parentData;
+        state.clinics = initialState.clinics;
+        state.verifiedClinics = initialState.verifiedClinics;
+        console.log('✅ User signed out and backend notified');
       })
-
-      // Get Parent
-      .addCase(getParent.pending, state => { state.parentData.loading = true; state.parentData.error = null; })
-      .addCase(getParent.fulfilled, (state, action) => { state.parentData.loading = false; state.parentData.data = action.payload; })
-      .addCase(getParent.rejected, (state, action) => { state.parentData.loading = false; state.parentData.error = action.payload; })
-
-      // Update Parent
-      .addCase(updateParent.pending, state => { state.parentData.loading = true; state.parentData.error = null; })
-      .addCase(updateParent.fulfilled, (state, action) => { state.parentData.loading = false; state.parentData.data = action.payload; })
-      .addCase(updateParent.rejected, (state, action) => { state.parentData.loading = false; state.parentData.error = action.payload; })
-
-      // Pets
-      .addCase(getPetsByUserId.pending, state => { state.userPets.loading = true; state.userPets.error = null; })
-      .addCase(getPetsByUserId.fulfilled, (state, action) => { state.userPets.loading = false; state.userPets.data = action.payload; })
-      .addCase(getPetsByUserId.rejected, (state, action) => { state.userPets.loading = false; state.userPets.error = action.payload; });
+      .addCase(getPetsByUserId.fulfilled, (state, action) => {
+        state.userPets.loading = false;
+        state.userPets.data = action.payload;
+      })
+      .addCase(updatePet.pending, (state) => {
+        state.userPets.loading = true;
+        state.userPets.error = null;
+      })
+      .addCase(updatePet.fulfilled, (state, action) => {
+        state.userPets.loading = false;
+        // Update the specific pet in the array
+        const updatedPet = action.payload.data?.pet || action.payload.pet;
+        if (updatedPet) {
+          const index = state.userPets.data.findIndex(pet => pet._id === updatedPet._id);
+          if (index !== -1) {
+            state.userPets.data[index] = updatedPet;
+          }
+        }
+      })
+      .addCase(updatePet.rejected, (state, action) => {
+        state.userPets.loading = false;
+        state.userPets.error = action.payload;
+      })
+      .addCase(getAllVerifiedClinics.pending, (state) => {
+        if (!state.verifiedClinics) {
+          state.verifiedClinics = { loading: false, error: null, data: [] };
+        }
+        state.verifiedClinics.loading = true;
+        state.verifiedClinics.error = null;
+      })
+      .addCase(getAllVerifiedClinics.fulfilled, (state, action) => {
+        if (!state.verifiedClinics) {
+          state.verifiedClinics = { loading: false, error: null, data: [] };
+        }
+        state.verifiedClinics.loading = false;
+        state.verifiedClinics.data = action.payload;
+      })
+      .addCase(getAllVerifiedClinics.rejected, (state, action) => {
+        if (!state.verifiedClinics) {
+          state.verifiedClinics = { loading: false, error: null, data: [] };
+        }
+        state.verifiedClinics.loading = false;
+        state.verifiedClinics.error = action.payload;
+      })
+      .addCase(parentUser.pending, (state) => {
+        state.parentData.loading = true;
+        state.parentData.error = null;
+      })
+      .addCase(parentUser.fulfilled, (state, action) => {
+        state.parentData.loading = false;
+        state.parentData.data = action.payload;
+      })
+      .addCase(parentUser.rejected, (state, action) => {
+        state.parentData.loading = false;
+        state.parentData.error = action.payload;
+      });
   },
 });
 
-export const { signOut, clearError } = authSlice.actions;
+export const { clearError, clearLoading } = authSlice.actions;
+export { signOutUser as signOut }; // Export signOutUser as signOut for backend integration
 export default authSlice.reducer;

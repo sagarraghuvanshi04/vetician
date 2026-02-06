@@ -1,10 +1,12 @@
 
 const Pet = require('../models/Pet');
 const { catchAsync } = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
+
 // Register pet
 const createPet = catchAsync(async (req, res, next) => {
   const { name, species, gender, userId } = req.body;
-  console.log(req.body);
+  console.log('Creating pet with data:', req.body);
 
   // Validate required fields
   if (!name || !species || !gender) {
@@ -15,28 +17,18 @@ const createPet = catchAsync(async (req, res, next) => {
     return next(new AppError('User ID is required', 400));
   }
 
-  // Check if pet already exists for this user
-  // const existingPet = await Pet.findOne({ name, userId });
-  // if (existingPet) {
-  //   return next(new AppError('A pet with this name already exists for this user', 409));
-  // }
-
-  // Create new pet  
+  // Create new pet with all provided data
   const pet = new Pet({
-    name,
-    species,
-    gender,
-    userId,
-    ...req.body // Include any additional fields
+    ...req.body,
+    userId
   });
 
   await pet.save();
 
-
   res.status(201).json({
     success: true,
     message: 'Pet created successfully',
-    pet: pet.getBasicInfo()
+    pet: pet
   });
 });
 

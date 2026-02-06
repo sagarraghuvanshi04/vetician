@@ -44,7 +44,7 @@ export default function PetDetail() {
 
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
-  const { isLoading, error } = useSelector(state => state.auth);
+  const { isLoading, error, isAuthenticated, user } = useSelector(state => state.auth);
   const router = useRouter();
 
   const speciesOptions = ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Hamster', 'Other'];
@@ -98,40 +98,40 @@ export default function PetDetail() {
   };
 
   const uploadToCloudinary = async (file) => {
-    const fileExtension = file.uri.split('.').pop().toLowerCase();
-    const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
-    const type = isImage ? 'image' : 'raw';
-
     console.log('[Cloudinary] Starting upload:', {
       name: file.name || 'unnamed',
-      type,
-      size: file.size || 'unknown',
       uri: file.uri
     });
 
     try {
-      const fileInfo = await FileSystem.getInfoAsync(file.uri, { size: true });
-      if (!fileInfo.exists) throw new Error(`File not found: ${file.uri}`);
-      if (fileInfo.size === 0) throw new Error('Empty file');
-
+      // Handle base64 data URIs (web) vs file URIs (mobile)
+      const isDataUri = file.uri.startsWith('data:');
+      
       const formData = new FormData();
-      formData.append('file', {
-        uri: file.uri,
-        name: file.name || `pet_upload_${Date.now()}.${fileExtension}`,
-        type: isImage ? `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`
-          : file.type || 'application/octet-stream'
-      });
+      
+      if (isDataUri) {
+        // For web - convert base64 to blob
+        const response = await fetch(file.uri);
+        const blob = await response.blob();
+        formData.append('file', blob, file.name || `pet_upload_${Date.now()}.jpg`);
+      } else {
+        // For mobile - use file URI directly
+        const fileExtension = file.uri.split('.').pop().toLowerCase();
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name || `pet_upload_${Date.now()}.${fileExtension}`,
+          type: `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`
+        });
+      }
+      
       formData.append('upload_preset', 'vetician');
       formData.append('cloud_name', 'dqwzfs4ox');
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/dqwzfs4ox/${type}/upload`,
+        'https://api.cloudinary.com/v1_1/dqwzfs4ox/image/upload',
         {
           method: 'POST',
           body: formData,
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
         }
       );
 
@@ -141,16 +141,12 @@ export default function PetDetail() {
 
       const data = await response.json();
       console.log('[Cloudinary] Upload success!', {
-        public_id: data.public_id,
-        type,
-        size: fileInfo.size
+        public_id: data.public_id
       });
       return data;
     } catch (error) {
       console.error('[Cloudinary] UPLOAD FAILED:', {
         error: error.message,
-        file: file.name,
-        type,
         uri: file.uri
       });
       throw error;
@@ -207,10 +203,23 @@ export default function PetDetail() {
   const handleSubmit = async () => {
     if (!validateStep(step)) return;
 
+    // 🔍 DEBUG: Check authentication state before submitting
+    const storedUserId = await AsyncStorage.getItem('userId');
+    const token = await AsyncStorage.getItem('token');
+    console.log('🔍 PetDetail - Auth check:', {
+      userId: storedUserId || 'Not found',
+      token: token ? 'Found' : 'Not found',
+      isAuthenticated,
+      hasUser: !!user
+    });
+    
+    if (!token) {
+      Alert.alert('Authentication Error', 'Please log in again to continue.');
+      return;
+    }
+
     setIsUploading(true);
     try {
-      const userId = await AsyncStorage.getItem('userId');
-      
       // Upload pet photo first
       let petPhotoUrl = '';
       if (formData.petPhoto) {
@@ -222,7 +231,7 @@ export default function PetDetail() {
         ...formData,
         dob: formData.dob.toISOString().split('T')[0],
         petPhoto: petPhotoUrl,
-        userId
+        userId: storedUserId
       };
 
       console.log("submissionData =>", submissionData);
@@ -234,7 +243,7 @@ export default function PetDetail() {
         Alert.alert(
           'Success',
           'Pet information has been saved successfully!',
-          [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+          [{ text: 'OK', onPress: () => router.replace('/(vetician_tabs)/(tabs)') }]
         );
       }
     } catch (error) {

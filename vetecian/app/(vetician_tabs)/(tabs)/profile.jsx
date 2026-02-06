@@ -61,22 +61,30 @@ export default function Profile() {
     fetchParentData();
   }, [dispatch, user]);
 
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: () => {
-            dispatch(signOut());
-            router.replace('/(auth)/signin');
-          },
-        },
-      ]
-    );
+  const handleSignOut = async () => {
+    console.log('🔴 SIGN OUT BUTTON CLICKED!');
+    
+    try {
+      console.log('🔍 Starting direct sign out...');
+      
+      // Clear AsyncStorage directly
+      await AsyncStorage.multiRemove(['userId', 'token']);
+      console.log('✅ AsyncStorage cleared');
+      
+      // Dispatch the thunk
+      const result = await dispatch(signOut()).unwrap();
+      console.log('✅ SignOut thunk completed:', result);
+      
+      // Navigate
+      router.replace('/(auth)/signin');
+      console.log('✅ Navigation completed');
+      
+    } catch (error) {
+      console.log('❌ Sign out error:', error);
+      // Force clear and navigate anyway
+      await AsyncStorage.multiRemove(['userId', 'token']);
+      router.replace('/(auth)/signin');
+    }
   };
 
   const handlePetPress = (pet) => {
@@ -260,7 +268,11 @@ export default function Profile() {
       >
         <View style={styles.petImageContainer}>
           {item?.petPhoto ? (
-            <Image source={{ uri: item.petPhoto }} style={styles.petImage} />
+            <Image 
+              source={{ uri: item.petPhoto }} 
+              style={styles.petImage}
+              onError={() => console.log('Image load failed for:', item.petPhoto)}
+            />
           ) : (
             <View style={styles.petImagePlaceholder}>
               <FontAwesome5
@@ -323,6 +335,7 @@ export default function Profile() {
                 source={{ uri: parentData.image }}
                 style={styles.profileImage}
                 resizeMode="cover"
+                onError={() => console.log('Profile image load failed')}
               />
             ) : (
               <View style={styles.avatar}>

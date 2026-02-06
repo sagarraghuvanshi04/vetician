@@ -6,6 +6,7 @@ const {
   changePassword,
   deleteAccount,
   getVeterinarianPublicProfile,
+  getDashboardStats,
   getVeterinarianAdmin,
   getAllVeterinarians,
   getAllVeterinariansAdmin
@@ -48,6 +49,7 @@ router.get('/profile', auth, getProfile);
 router.put('/profile', auth, updateProfileValidation, validate, updateProfile);
 router.put('/change-password', auth, changePasswordValidation, validate, changePassword);
 router.delete('/account', auth, deleteAccount);
+router.get('/dashboard-stats', auth, getDashboardStats);
 
 // Public routes
 router.get('/veterinarians/:id', getVeterinarianPublicProfile);

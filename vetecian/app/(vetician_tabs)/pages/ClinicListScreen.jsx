@@ -1,679 +1,484 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState } from 'react';
+// import {
+//   View, Text, StyleSheet, ScrollView, TouchableOpacity,
+//   TextInput, FlatList, Image, Dimensions, SafeAreaView
+// } from 'react-native';
+// import { MaterialIcons, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+// import { router } from 'expo-router';
+// import { ChevronLeft } from 'lucide-react-native';
+
+// const { width } = Dimensions.get('window');
+
+// // --- MOCK DATA ---
+// const MOCK_CLINICS = [
+//   {
+//     clinicDetails: {
+//       _id: '1',
+//       clinicName: 'Happy Paws Vet Care',
+//       city: 'Bangalore',
+//       locality: 'Indiranagar',
+//       establishmentType: 'Multi-speciality Clinic',
+//       fees: '450',
+//       verified: true,
+//     },
+//     veterinarianDetails: {
+//       name: 'Rahul Sharma',
+//       experience: '12',
+//       gender: 'Male',
+//       specialization: 'Surgeon',
+//       profilePhotoUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=200&h=200&auto=format&fit=crop',
+//     }
+//   },
+//   {
+//     clinicDetails: {
+//       _id: '2',
+//       clinicName: 'Pet Wellness Center',
+//       city: 'Bangalore',
+//       locality: 'Koramangala',
+//       establishmentType: 'Pet Hospital',
+//       fees: '600',
+//       verified: true,
+//     },
+//     veterinarianDetails: {
+//       name: 'Aditi Rao',
+//       experience: '8',
+//       gender: 'Female',
+//       specialization: 'Dermatologist',
+//       profilePhotoUrl: 'https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=200&h=200&auto=format&fit=crop',
+//     }
+//   },
+//   {
+//     clinicDetails: {
+//       _id: '1',
+//       clinicName: 'Happy Paws Vet Care',
+//       city: 'Bangalore',
+//       locality: 'Indiranagar',
+//       establishmentType: 'Multi-speciality Clinic',
+//       fees: '450',
+//       verified: true,
+//     },
+//     veterinarianDetails: {
+//       name: 'Rahul Sharma',
+//       experience: '12',
+//       gender: 'Male',
+//       specialization: 'Surgeon',
+//       profilePhotoUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=200&h=200&auto=format&fit=crop',
+//     }
+//   }
+// ];
+
+// const ClinicCard = ({ clinic, onPress }) => {
+//   const { clinicDetails, veterinarianDetails: vet } = clinic;
+//   return (
+//     <TouchableOpacity style={styles.card} onPress={onPress}>
+//       <View style={styles.cardTopSection}>
+//         <Image source={{ uri: vet?.profilePhotoUrl }} style={styles.profileImage} />
+//         <View style={styles.mainInfo}>
+//           <Text style={styles.drName}>Dr. {vet.name}</Text>
+//           <Text style={styles.specializationText}>Pet {vet.specialization}</Text>
+//           <Text style={styles.expText}>{vet.experience} years experience overall</Text>
+          
+//           <View style={styles.locationRow}>
+//             <Text style={styles.boldText}>{clinicDetails.locality}, {clinicDetails.city}</Text>
+//             <Text style={styles.dot}> • </Text>
+//             <Text style={styles.clinicNameText}>{clinicDetails.clinicName}</Text>
+//           </View>
+          
+//           <Text style={styles.feeText}>₹{clinicDetails.fees} Consultation fee at clinic</Text>
+          
+//           <View style={styles.ratingRow}>
+//             <View style={styles.thumbBadge}>
+//               <MaterialIcons name="thumb-up" size={12} color="white" />
+//               <Text style={styles.thumbText}>98%</Text>
+//             </View>
+//             <Text style={styles.storiesText}>45 Patient Stories</Text>
+//           </View>
+//         </View>
+//       </View>
+
+//       <View style={styles.cardBottom}>
+//         <View style={styles.availability}>
+//           <MaterialCommunityIcons name="calendar-check" size={16} color="#10B981" />
+//           <Text style={styles.availText}>Available Today</Text>
+//         </View>
+//         <TouchableOpacity style={styles.bookBtn} onPress={onPress}>
+//           <Text style={styles.bookBtnText}>Book Clinic Visit</Text>
+//         </TouchableOpacity>
+        
+//       </View>
+//     </TouchableOpacity>
+//   );
+// };
+
+// export default function ClinicListScreen() {
+//   const [searchQuery, setSearchQuery] = useState('');
+//   const [location, setLocation] = useState('Bangalore');
+
+//   const filteredData = MOCK_CLINICS.filter(item => 
+//     item.clinicDetails.clinicName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+//     item.veterinarianDetails.name.toLowerCase().includes(searchQuery.toLowerCase())
+//   );
+
+//   return (
+//     <SafeAreaView style={styles.container}>
+//       {/* Practo Style Dual Search Bar */}
+//       <View style={styles.searchHeader}>
+//         <View style={styles.searchBox}>
+//           <View style={styles.locationInput}>
+//             <Ionicons name="location-outline" size={18} color="#7D7D7D" />
+//             <TextInput 
+//               style={styles.input} 
+//               value={location} 
+//               onChangeText={setLocation}
+//               placeholder="Location"
+//             />
+//           </View>
+//           <View style={styles.divider} />
+//           <View style={styles.serviceInput}>
+//             <Ionicons name="search-outline" size={18} color="#7D7D7D" />
+//             <TextInput 
+//               style={styles.input} 
+//               placeholder="Search Vets, Clinics..." 
+//               value={searchQuery}
+//               onChangeText={setSearchQuery}
+//             />
+//           </View>
+//         </View>
+//       </View>
+
+//       {/* Filter Chips */}
+//       <View style={styles.filterWrapper}>
+//         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterContainer}>
+//           <FilterChip label="Gender" icon="chevron-down" />
+//           <FilterChip label="Patient Stories" icon="chevron-down" />
+//           <FilterChip label="Experience" icon="chevron-down" />
+//           <FilterChip label="All Filters" icon="options-outline" isIconLeft />
+//         </ScrollView>
+//       </View>
+
+//       <View style={styles.resultsCountBar}>
+//         <Text style={styles.resultsCount}>{filteredData.length} Vets available in {location}</Text>
+//         <View style={styles.verifiedInfo}>
+//           <MaterialIcons name="check-circle" size={14} color="#555" />
+//           <Text style={styles.verifiedInfoText}>Verified details</Text>
+//         </View>
+//       </View>
+
+//       <FlatList
+//         data={filteredData}
+//         renderItem={({ item }) => (
+//           <ClinicCard 
+//             clinic={item} 
+//             onPress={() => router.push({
+//               pathname: '/pages/ClinicDetailScreen',
+//               params: { clinic: JSON.stringify(item) }
+//             })} 
+//           />
+//         )}
+//         keyExtractor={(item) => item.clinicDetails._id}
+//         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+//       />
+//     </SafeAreaView>
+//   );
+// }
+
+// const FilterChip = ({ label, icon, isIconLeft }) => (
+//   <TouchableOpacity style={styles.chip}>
+//     {isIconLeft && <Ionicons name={icon} size={14} color="#555" style={{marginRight: 4}} />}
+//     <Text style={styles.chipText}>{label}</Text>
+//     {!isIconLeft && <Ionicons name={icon} size={14} color="#555" style={{marginLeft: 4}} />}
+//   </TouchableOpacity>
+// );
+
+// const styles = StyleSheet.create({
+//   container: { flex: 1, backgroundColor: '#f0f0f5' },
+  
+//   // Search Bar Header
+//   searchHeader: { backgroundColor: '#28328c', padding: 12, paddingTop: 40 },
+//   searchBox: { 
+//     flexDirection: 'row', backgroundColor: 'white', borderRadius: 6, height: 45, alignItems: 'center' 
+//   },
+//   locationInput: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingLeft: 10 },
+//   serviceInput: { flex: 2, flexDirection: 'row', alignItems: 'center', paddingLeft: 10 },
+//   divider: { width: 1, height: '60%', backgroundColor: '#ddd' },
+//   input: { flex: 1, marginLeft: 5, fontSize: 14, color: '#333' },
+
+//   // Filters
+//   filterWrapper: { backgroundColor: '#28328c', paddingBottom: 10 },
+//   filterContainer: { paddingHorizontal: 12, gap: 8 },
+//   chip: { 
+//     flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.2)', 
+//     paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' 
+//   },
+//   chipText: { color: 'white', fontSize: 12 },
+
+//   resultsCountBar: { padding: 15 },
+//   resultsCount: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+//   verifiedInfo: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+//   verifiedInfoText: { fontSize: 12, color: '#666', marginLeft: 4 },
+
+//   // Professional Card Style
+//   card: { backgroundColor: 'white', marginBottom: 12, borderRadius: 4, overflow: 'hidden', elevation: 2 },
+//   cardTopSection: { flexDirection: 'row', padding: 15 },
+//   profileImage: { width: 80, height: 80, borderRadius: 40 },
+//   mainInfo: { flex: 1, marginLeft: 15 },
+//   drName: { fontSize: 18, fontWeight: 'bold', color: '#24A1DE' },
+//   specializationText: { fontSize: 14, color: '#666', marginTop: 2 },
+//   expText: { fontSize: 13, color: '#666' },
+//   locationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+//   boldText: { fontSize: 13, fontWeight: 'bold', color: '#444' },
+//   clinicNameText: { fontSize: 13, color: '#24A1DE' },
+//   dot: { color: '#ccc' },
+//   feeText: { fontSize: 13, color: '#444', marginTop: 4 },
+  
+//   ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
+//   thumbBadge: { 
+//     backgroundColor: '#10B981', flexDirection: 'row', alignItems: 'center', 
+//     paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 
+//   },
+//   thumbText: { color: 'white', fontSize: 12, fontWeight: 'bold', marginLeft: 4 },
+//   storiesText: { fontSize: 12, color: '#24A1DE', marginLeft: 10, fontWeight: '600', textDecorationLine: 'underline' },
+
+//   cardBottom: { 
+//     borderTopWidth: 1, borderTopColor: '#eee', padding: 12, 
+//     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' 
+//   },
+//   availability: { flexDirection: 'row', alignItems: 'center' },
+//   availText: { color: '#10B981', fontSize: 13, fontWeight: '600', marginLeft: 5 },
+//   bookBtn: { backgroundColor: '#24A1DE', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 4 },
+//   bookBtnText: { color: 'white', fontWeight: 'bold', fontSize: 14 }
+// });
+
+import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  FlatList,
-  Image,
-  Dimensions
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, FlatList, Image, Dimensions, SafeAreaView, Linking
 } from 'react-native';
-import { MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useDispatch, useSelector } from 'react-redux';
-import { getAllVerifiedClinics } from '../../../store/slices/authSlice';
+import { MaterialIcons, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
 
-const ClinicCard = ({ clinic, onPress }) => {
-  if (!clinic?.clinicDetails) return null;
+// --- MOCK DATA ---
+const MOCK_CLINICS = [
+  {
+    clinicDetails: {
+      _id: '1',
+      clinicName: 'Happy Paws Vet Care',
+      city: 'Bangalore',
+      locality: 'Indiranagar',
+      establishmentType: 'Multi-speciality Clinic',
+      fees: '450',
+      verified: true,
+      phoneNumber: '9876543210' // For Call feature
+    },
+    veterinarianDetails: {
+      name: 'Rahul Sharma',
+      experience: '12',
+      gender: 'Male',
+      specialization: 'Surgeon',
+      profilePhotoUrl: 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=200&h=200&auto=format&fit=crop',
+    }
+  },
+  {
+    clinicDetails: {
+      _id: '2',
+      clinicName: 'Pet Wellness Center',
+      city: 'Bangalore',
+      locality: 'Koramangala',
+      establishmentType: 'Pet Hospital',
+      fees: '600',
+      verified: true,
+      phoneNumber: '9876543211'
+    },
+    veterinarianDetails: {
+      name: 'Aditi Rao',
+      experience: '8',
+      gender: 'Female',
+      specialization: 'Dermatologist',
+      profilePhotoUrl: 'https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=200&h=200&auto=format&fit=crop',
+    }
+  }
+];
 
-  const clinicDetails = clinic.clinicDetails;
-  const vet = clinic?.veterinarianDetails;
+const ClinicCard = ({ clinic, onPress }) => {
+  const { clinicDetails, veterinarianDetails: vet } = clinic;
+
+  const handleCall = () => {
+    Linking.openURL(`tel:${clinicDetails.phoneNumber}`);
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View style={styles.cardImageContainer}>
-        {vet?.profilePhotoUrl ? (
-          <Image source={{ uri: vet.profilePhotoUrl }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.profilePlaceholder}>
-            <MaterialIcons name="business" size={32} color="#4E8D7C" />
+      <View style={styles.cardTopSection}>
+        <Image source={{ uri: vet?.profilePhotoUrl }} style={styles.profileImage} />
+        <View style={styles.mainInfo}>
+          <Text style={styles.drName}>Dr. {vet.name}</Text>
+          <Text style={styles.specializationText}>Pet {vet.specialization}</Text>
+          <Text style={styles.expText}>{vet.experience} years experience overall</Text>
+          
+          <View style={styles.locationRow}>
+            <Text style={styles.boldText}>{clinicDetails.locality}, {clinicDetails.city}</Text>
+            <Text style={styles.dot}> • </Text>
+            <Text style={styles.clinicNameText}>{clinicDetails.clinicName}</Text>
           </View>
-        )}
+          
+          <Text style={styles.feeText}>₹{clinicDetails.fees} Consultation fee at clinic</Text>
+          
+          <View style={styles.ratingRow}>
+            <View style={styles.thumbBadge}>
+              <MaterialIcons name="thumb-up" size={12} color="white" />
+              <Text style={styles.thumbText}>98%</Text>
+            </View>
+            <Text style={styles.storiesText}>45 Patient Stories</Text>
+          </View>
+        </View>
       </View>
 
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.clinicName} numberOfLines={1}>
-            {clinicDetails.clinicName}
-          </Text>
-          <View style={[
-            styles.verifiedBadge,
-            clinicDetails.verified ? styles.verified : styles.pending
-          ]}>
-            <MaterialIcons
-              name="verified"
-              size={14}
-              color={clinicDetails.verified ? "white" : "white"}
-            />
-            <Text style={styles.verifiedText}>
-              {clinicDetails.verified ? "Verified" : "Pending"}
-            </Text>
-          </View>
+      {/* --- Updated Button Section (As per your Screenshot) --- */}
+      <View style={styles.buttonWrapper}>
+        
+        {/* Row 1: Book Clinic Visit (Primary Blue) */}
+        <TouchableOpacity style={styles.bookClinicBtn} onPress={onPress}>
+          <Text style={styles.bookClinicBtnText}>Book Clinic Visit</Text>
+          <Text style={styles.noBookingFeeText}>No Booking Fee</Text>
+        </TouchableOpacity>
+
+        <View style={styles.secondaryButtonsRow}>
+          {/* Row 2: Contact Clinic (Outline Style) */}
+          <TouchableOpacity style={styles.contactBtn} onPress={handleCall}>
+            <Ionicons name="call" size={18} color="#24A1DE" />
+            <Text style={styles.contactBtnText}>Contact Clinic</Text>
+          </TouchableOpacity>
+
+          {/* Row 3: Video Call (Outline Style) */}
+          <TouchableOpacity 
+            style={styles.videoBtn} 
+            onPress={() => router.push('/pages/VideoCall')}
+          >
+            <Ionicons name="videocam" size={18} color="#24A1DE" />
+            <Text style={styles.contactBtnText}>Video Call</Text>
+          </TouchableOpacity>
         </View>
 
-        <Text style={styles.establishmentType}>{clinicDetails.establishmentType}</Text>
-
-        <View style={styles.location}>
-          <MaterialIcons name="location-on" size={14} color="#7D7D7D" />
-          <Text style={styles.address} numberOfLines={1}>
-            {clinicDetails.locality}, {clinicDetails.city}
-          </Text>
-        </View>
-
-        {vet && (
-          <View style={styles.vetInfo}>
-            <Text style={styles.vetName}>Dr. {vet.name}</Text>
-            <View style={styles.specialtyContainer}>
-              <FontAwesome5 name="clinic-medical" size={12} color="#4E8D7C" />
-              <Text style={styles.vetSpecialty}>{vet.specialization}</Text>
-            </View>
-            <View style={styles.experienceContainer}>
-              <MaterialCommunityIcons name="clock-outline" size={12} color="#4E8D7C" />
-              <Text style={styles.vetExperience}>{vet.experience} years experience</Text>
-            </View>
-          </View>
-        )}
-
-        <View style={styles.footer}>
-          <View style={styles.feesContainer}>
-            <Text style={styles.feesLabel}>Consultation:</Text>
-            <Text style={styles.feesValue}>₹{clinicDetails.fees || "NA"}</Text>
-          </View>
-          <View style={styles.ratingContainer}>
-            <MaterialIcons name="star" size={16} color="#FFC107" />
-            <Text style={styles.ratingText}>4.8</Text>
-            <Text style={styles.ratingCount}>(24)</Text>
-          </View>
-        </View>
       </View>
     </TouchableOpacity>
   );
 };
 
-const ClinicListScreen = () => {
-  const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function ClinicListScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilters, setSelectedFilters] = useState({
-    establishmentType: null,
-    serviceType: null,
-    city: null
-  });
+  const [location, setLocation] = useState('Bangalore');
 
-  const clinics = useSelector(state => state.auth.verifiedClinics?.data || []);
-
-  useEffect(() => {
-    const fetchClinics = async () => {
-      try {
-        setLoading(true);
-        const result = await dispatch(getAllVerifiedClinics());
-
-        if (result.error) {
-          throw new Error(result.payload || 'Failed to load clinics');
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchClinics();
-  }, [dispatch]);
-
-  const filteredClinics = clinics.filter(clinic => {
-    if (!clinic?.clinicDetails) return false;
-
-    const { clinicDetails } = clinic;
-    const searchLower = searchQuery.toLowerCase();
-
-    const matchesSearch =
-      clinicDetails.clinicName?.toLowerCase().includes(searchLower) ||
-      clinicDetails.city?.toLowerCase().includes(searchLower) ||
-      clinicDetails.locality?.toLowerCase().includes(searchLower) ||
-      (clinic.veterinarianDetails?.name?.toLowerCase().includes(searchLower));
-
-    const matchesEstablishment =
-      !selectedFilters.establishmentType ||
-      clinicDetails.establishmentType === selectedFilters.establishmentType;
-
-    let matchesService = true;
-    if (selectedFilters.serviceType && clinicDetails.timings) {
-      const days = Object.values(clinicDetails.timings);
-      matchesService = days.some(day => day && day.type === selectedFilters.serviceType);
-    }
-
-    const matchesCity =
-      !selectedFilters.city ||
-      clinicDetails.city === selectedFilters.city;
-
-    return matchesSearch && matchesEstablishment && matchesService && matchesCity;
-  });
-
-  const establishmentTypes = [...new Set(clinics
-    .filter(c => c?.clinicDetails?.establishmentType)
-    .map(c => c.clinicDetails.establishmentType)
-  )];
-
-  const cities = [...new Set(clinics
-    .filter(c => c?.clinicDetails?.city)
-    .map(c => c.clinicDetails.city)
-  )];
-
-  const handleClinicPress = (clinic) => {
-    const clinicData = {
-      clinicDetails: {
-        clinicName: clinic.clinicDetails.clinicName,
-        city: clinic.clinicDetails.city,
-        locality: clinic.clinicDetails.locality,
-        streetAddress: clinic.clinicDetails.streetAddress,
-        establishmentType: clinic.clinicDetails.establishmentType,
-        fees: clinic.clinicDetails.fees,
-        verified: clinic.clinicDetails.verified,
-        timings: clinic.clinicDetails.timings ? { ...clinic.clinicDetails.timings } : null,
-        clinicId: clinic.clinicDetails.clinicId
-      },
-      veterinarianDetails: clinic.veterinarianDetails ? {
-        name: clinic.veterinarianDetails.name,
-        experience: clinic.veterinarianDetails.experience,
-        specialization: clinic.veterinarianDetails.specialization,
-        profilePhotoUrl: clinic.veterinarianDetails.profilePhotoUrl,
-        isVerified: clinic.veterinarianDetails.isVerified,
-        vetId: clinic.veterinarianDetails.vetId,
-        gender: clinic.veterinarianDetails.gender,
-        title: clinic.veterinarianDetails.title
-      } : null
-    };
-
-    router.navigate({
-      pathname: '/pages/ClinicDetailScreen',
-      params: {
-        clinic: JSON.stringify(clinicData)
-      }
-    });
-  };
-
-  const toggleFilter = (filterType, value) => {
-    setSelectedFilters(prev => ({
-      ...prev,
-      [filterType]: prev[filterType] === value ? null : value
-    }));
-  };
-
-  const clearAllFilters = () => {
-    setSearchQuery('');
-    setSelectedFilters({
-      establishmentType: null,
-      serviceType: null,
-      city: null
-    });
-  };
-
-  if (loading) return (
-    <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#4E8D7C" />
-      <Text style={styles.loadingText}>Finding nearby clinics...</Text>
-    </View>
-  );
-
-  if (error) return (
-    <View style={styles.errorContainer}>
-      <MaterialIcons name="error-outline" size={50} color="#E74C3C" />
-      <Text style={styles.errorText}>{error}</Text>
-      <TouchableOpacity style={styles.retryButton} onPress={() => dispatch(getAllVerifiedClinics())}>
-        <Text style={styles.retryButtonText}>Try Again</Text>
-      </TouchableOpacity>
-    </View>
+  const filteredData = MOCK_CLINICS.filter(item => 
+    item.clinicDetails.clinicName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.veterinarianDetails.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.menuButton}>
-          <ChevronLeft size={24} color="#1a1a1a" />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Find a Clinic</Text>
-          <Text style={styles.headerSubtitle}>Verified veterinary clinics near you</Text>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.searchHeader}>
+        <View style={styles.searchBox}>
+          <View style={styles.locationInput}>
+            <Ionicons name="location-outline" size={18} color="#7D7D7D" />
+            <TextInput 
+              style={styles.input} 
+              value={location} 
+              onChangeText={setLocation}
+              placeholder="Location"
+            />
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.serviceInput}>
+            <Ionicons name="search-outline" size={18} color="#7D7D7D" />
+            <TextInput 
+              style={styles.input} 
+              placeholder="Search Vets, Clinics..." 
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
         </View>
       </View>
 
-      <View style={styles.searchContainer}>
-        <MaterialIcons name="search" size={20} color="#7D7D7D" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search clinics, doctors, or locations..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-        {searchQuery.length > 0 && (
-          <TouchableOpacity onPress={() => setSearchQuery('')}>
-            <MaterialIcons name="close" size={20} color="#7D7D7D" />
-          </TouchableOpacity>
+      <FlatList
+        data={filteredData}
+        renderItem={({ item }) => (
+          <ClinicCard 
+            clinic={item} 
+            onPress={() => router.push({
+              pathname: '/pages/ClinicDetailScreen',
+              params: { clinic: JSON.stringify(item) }
+            })} 
+          />
         )}
-      </View>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filtersContainer}
-        contentContainerStyle={styles.filtersContent}
-      >
-        <TouchableOpacity
-          style={[
-            styles.filterButton,
-            selectedFilters.establishmentType === null && styles.selectedFilter
-          ]}
-          onPress={clearAllFilters}
-        >
-          <Text style={[
-            styles.filterButtonText,
-            selectedFilters.establishmentType === null && styles.selectedFilterText
-          ]}>
-            All
-          </Text>
-        </TouchableOpacity>
-
-        {establishmentTypes.map((type, index) => (
-          <TouchableOpacity
-            key={index}
-            style={[
-              styles.filterButton,
-              selectedFilters.establishmentType === type && styles.selectedFilter
-            ]}
-            onPress={() => toggleFilter('establishmentType', type)}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              selectedFilters.establishmentType === type && styles.selectedFilterText
-            ]}>
-              {type}
-            </Text>
-          </TouchableOpacity>
-        ))}
-
-        {cities.slice(0, 5).map((city, index) => (
-          <TouchableOpacity
-            key={`city-${index}`}
-            style={[
-              styles.filterButton,
-              selectedFilters.city === city && styles.selectedFilter
-            ]}
-            onPress={() => toggleFilter('city', city)}
-          >
-            <Text style={[
-              styles.filterButtonText,
-              selectedFilters.city === city && styles.selectedFilterText
-            ]}>
-              {city}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>
-          {filteredClinics.length} {filteredClinics.length === 1 ? 'Clinic' : 'Clinics'} Available
-        </Text>
-        <TouchableOpacity onPress={clearAllFilters}>
-          <Text style={styles.clearFiltersText}>Reset filters</Text>
-        </TouchableOpacity>
-      </View>
-
-      {filteredClinics.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyTitle}>No Clinics Found</Text>
-          <Text style={styles.emptyText}>
-            {searchQuery ? 'Try a different search term' : 'Try adjusting your filters'}
-          </Text>
-          <TouchableOpacity
-            style={styles.clearFiltersButton}
-            onPress={clearAllFilters}
-          >
-            <Text style={styles.clearFiltersButtonText}>Clear All Filters</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={filteredClinics}
-          renderItem={({ item }) => (
-            <ClinicCard clinic={item} onPress={() => handleClinicPress(item)} />
-          )}
-          keyExtractor={(item) => item.clinicDetails?._id || String(Math.random())}
-          contentContainerStyle={styles.listContainer}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
-    </View>
+        keyExtractor={(item, index) => index.toString()}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 20 }}
+      />
+    </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 16,
-    paddingTop: 50
-  },
-  header: {
-    marginBottom: 20,
-    paddingHorizontal: 8,
-    display: "flex",
-    flexDirection: 'row'
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 4
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: '#7D7D7D'
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F8F9FA'
-  },
-  loadingText: {
-    marginTop: 16,
-    color: '#4E8D7C',
-    fontSize: 16
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#F8F9FA'
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#E74C3C',
-    marginVertical: 20,
-    textAlign: 'center'
-  },
-  retryButton: {
-    backgroundColor: '#4E8D7C',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10
-  },
-  retryButtonText: {
-    color: 'white',
-    fontWeight: '600'
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3
-  },
-  searchIcon: {
-    marginRight: 10
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#333',
-    fontFamily: 'Inter-Medium'
-  },
-  filtersContainer: {
-    marginBottom: 16,
-    maxHeight: 42
-  },
-  filtersContent: {
-    paddingHorizontal: 4
-  },
-  filterButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#EDEDED',
-    borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#EDEDED',
-  },
-  filterButtonText: {
-    color: '#555',
-    fontWeight: '500',
-    fontSize: 14
-  },
-  selectedFilter: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#4E8D7C'
-  },
-  selectedFilterText: {
-    color: '#4E8D7C',
-    fontWeight: '600'
-  },
-  resultsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 8
-  },
-  resultsText: {
-    color: '#2C3E50',
-    fontSize: 16,
-    fontWeight: '600'
-  },
-  clearFiltersText: {
-    color: '#4E8D7C',
-    fontSize: 14,
-    textDecorationLine: 'underline'
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 40
-  },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginTop: 16
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#7D7D7D',
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 24
-  },
-  clearFiltersButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#4E8D7C',
-    borderRadius: 8
-  },
-  clearFiltersButtonText: {
-    color: 'white',
-    fontWeight: '600'
-  },
-  listContainer: {
-    paddingBottom: 30
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 16,
-    flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3
-  },
-  cardImageContainer: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2
-  },
-  profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
-    marginRight: 16
-  },
-  profilePlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
-    backgroundColor: '#F0F7F4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16
-  },
-  cardContent: {
-    flex: 1
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8
-  },
-  clinicName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#2C3E50',
-    flex: 1,
-    marginRight: 10
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginLeft: 8
-  },
-  verified: {
-    backgroundColor: '#4E8D7C'
-  },
-  pending: {
-    backgroundColor: '#E67C00'
-  },
-  verifiedText: {
-    fontSize: 12,
-    color: 'white',
-    marginLeft: 4,
-    fontWeight: '600'
-  },
-  establishmentType: {
-    fontSize: 14,
-    color: '#7D7D7D',
-    marginBottom: 8,
-    fontStyle: 'italic'
-  },
-  location: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12
-  },
-  address: {
-    fontSize: 14,
-    color: '#555',
-    marginLeft: 4
-  },
-  vetInfo: {
-    marginBottom: 12,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#EEE'
-  },
-  vetName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 6
-  },
-  specialtyContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4
-  },
-  vetSpecialty: {
-    fontSize: 14,
-    color: '#4E8D7C',
-    marginLeft: 6
-  },
-  experienceContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  vetExperience: {
-    fontSize: 14,
-    color: '#7D7D7D',
-    marginLeft: 6
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#EEE'
-  },
-  feesContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  feesLabel: {
-    fontSize: 14,
-    color: '#7D7D7D',
-    marginRight: 6
-  },
-  feesValue: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#2C3E50'
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center'
-  },
-  ratingText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginLeft: 4,
-    marginRight: 2
-  },
-  ratingCount: {
-    fontSize: 12,
-    color: '#7D7D7D'
-  },
-  menuButton: {
-    marginRight: 20,
-    justifyContent: 'center',
-    padding: 5
-  },
-});
+  container: { flex: 1, backgroundColor: '#f0f0f5' },
+  searchHeader: { backgroundColor: '#28328c', padding: 12, paddingTop: 40 },
+  searchBox: { flexDirection: 'row', backgroundColor: 'white', borderRadius: 6, height: 45, alignItems: 'center' },
+  locationInput: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingLeft: 10 },
+  serviceInput: { flex: 2, flexDirection: 'row', alignItems: 'center', paddingLeft: 10 },
+  divider: { width: 1, height: '60%', backgroundColor: '#ddd' },
+  input: { flex: 1, marginLeft: 5, fontSize: 14, color: '#333' },
 
-export default ClinicListScreen;
+  card: { backgroundColor: 'white', marginBottom: 16, borderRadius: 8, elevation: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
+  cardTopSection: { flexDirection: 'row', padding: 15 },
+  profileImage: { width: 70, height: 70, borderRadius: 35 },
+  mainInfo: { flex: 1, marginLeft: 15 },
+  drName: { fontSize: 18, fontWeight: 'bold', color: '#24A1DE' },
+  specializationText: { fontSize: 14, color: '#666' },
+  expText: { fontSize: 13, color: '#666' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 5 },
+  boldText: { fontSize: 13, fontWeight: 'bold', color: '#444' },
+  clinicNameText: { fontSize: 13, color: '#24A1DE' },
+  dot: { color: '#ccc' },
+  feeText: { fontSize: 13, color: '#444', marginTop: 4 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8 },
+  thumbBadge: { backgroundColor: '#10B981', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  thumbText: { color: 'white', fontSize: 12, fontWeight: 'bold', marginLeft: 4 },
+  storiesText: { fontSize: 12, color: '#24A1DE', marginLeft: 10, fontWeight: '600' },
+
+  // --- New Button Styles ---
+  buttonWrapper: { padding: 15, borderTopWidth: 1, borderTopColor: '#eee' },
+  
+  bookClinicBtn: { 
+    backgroundColor: '#24A1DE', 
+    borderRadius: 6, 
+    paddingVertical: 10, 
+    alignItems: 'center',
+    marginBottom: 10 
+  },
+  bookClinicBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
+  noBookingFeeText: { color: 'white', fontSize: 12, opacity: 0.9 },
+
+  secondaryButtonsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  
+  contactBtn: { 
+    flex: 1,
+    flexDirection: 'row',
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    borderRadius: 6, 
+    paddingVertical: 12, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  videoBtn: { 
+    flex: 1,
+    flexDirection: 'row',
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    borderRadius: 6, 
+    paddingVertical: 12, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  contactBtnText: { color: '#24A1DE', fontSize: 15, fontWeight: 'bold', marginLeft: 8 }
+});

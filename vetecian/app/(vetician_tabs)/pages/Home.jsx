@@ -1,597 +1,930 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
+  Dimensions,
+} from 'react-native';
 import { useSelector } from 'react-redux';
-import { Smile, Activity, Star, TrendingUp, Menu, Calendar, Heart, Map, Stethoscope, AlertCircle } from 'lucide-react-native';
-import { DrawerActions } from '@react-navigation/native';
-import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import React, { useState } from 'react';
-import PetDetailModal from '../../../components/petparent/home/PetDetailModal'; // Import the separate modal component
+import { LinearGradient } from 'expo-linear-gradient';
+import {
+  Menu,
+  Heart,
+  MapPin,
+  Calendar,
+  Bell,
+  Plus,
+  ChevronRight,
+  Activity,
+  Clock,
+  Stethoscope,
+  Users,
+} from 'lucide-react-native';
+import { DrawerActions, useNavigation } from '@react-navigation/native';
+import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ApiService from '../../../services/api';
+import PetDetailModal from '../../../components/petparent/home/PetDetailModal';
+
+const { width } = Dimensions.get('window');
 
 export default function Home() {
-    const { user } = useSelector(state => state.auth);
-    const clinics = useSelector(state => state.auth.verifiedClinics?.data || []);
-    const pets = useSelector(state => state.auth?.userPets?.data || []);
-    const navigation = useNavigation();
-    const [selectedPet, setSelectedPet] = useState(null);
-    const [modalVisible, setModalVisible] = useState(false);
+  const user = useSelector((state) => state.auth.user);
+  const navigation = useNavigation();
 
-    const stats = [
-        { icon: Activity, label: 'Active', value: '24/7', color: '#34C759' },
-        { icon: Star, label: 'Rating', value: '4.9', color: '#FF9500' },
-        { icon: TrendingUp, label: 'Growth', value: '+15%', color: '#007AFF' },
-    ];
+  const [parentData, setParentData] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
+  const [pets, setPets] = useState([]);
+  const [clinics, setClinics] = useState([]);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [selectedPet, setSelectedPet] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
-    const quickActions = [
-        { id: '1', icon: Stethoscope, title: 'Book Appointment', color: '#007AFF', screen: 'Appointment' },
-        { id: '2', icon: Map, title: 'Find Clinics', color: '#34C759', screen: 'ClinicList' },
-        { id: '3', icon: Heart, title: 'My Pets', color: '#FF9500', screen: 'Pets' }
-    ];
+  // Fetch Parent Data
+  const fetchParentData = async () => {
+    try {
+      const data = await ApiService.get('/parents/profile');
+      setParentData(data);
+    } catch (err) {
+      console.error('❌ Parent data fetch failed:', err.message);
+    }
+  };
 
-    const healthTips = [
-        { id: '1', title: 'Summer Pet Care', description: 'Keep your pets hydrated and avoid hot pavement' },
-        { id: '2', title: 'Vaccination Reminder', description: 'Annual vaccines are due next month' },
-        { id: '3', title: 'Dental Health', description: 'Schedule a dental checkup for your pet' }
-    ];
+  // Fetch Dashboard Stats
+  const fetchDashboard = async () => {
+    try {
+      const data = await ApiService.get('/users/dashboard-stats');
+      setDashboard(data);
+    } catch (err) {
+      console.error('❌ Dashboard fetch failed:', err.message);
+    }
+  };
 
-    const openDrawer = () => {
-        navigation.dispatch(DrawerActions.openDrawer());
+  // Fetch Pets
+  const fetchPets = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        const data = await ApiService.getPetsByUserId(userId);
+        setPets(data?.pets || []);
+      }
+    } catch (err) {
+      console.error('❌ Pets fetch failed:', err.message);
+    }
+  };
+
+  // Fetch Nearby Clinics
+  const fetchClinics = async () => {
+    try {
+      const data = await ApiService.get('/clinics');
+      setClinics(data?.clinics || []);
+    } catch (err) {
+      console.error('❌ Clinics fetch failed:', err.message);
+    }
+  };
+
+  // Fetch Upcoming Appointments
+  const fetchAppointments = async () => {
+    try {
+      const data = await ApiService.get('/appointments/upcoming');
+      setAppointments(data?.appointments || []);
+    } catch (err) {
+      console.error('❌ Appointments fetch failed:', err.message);
+    }
+  };
+
+  const loadData = async () => {
+    await Promise.all([
+      fetchParentData(),
+      fetchDashboard(),
+      fetchPets(),
+      fetchClinics(),
+      fetchAppointments(),
+    ]);
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true);
+      await loadData();
+      setLoading(false);
     };
+    init();
+  }, []);
 
-    const navigateTo = (screen) => {
-        navigation.navigate(screen);
-    };
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
-    const handleClinicPress = (clinic) => {
-        const clinicData = {
-            clinicDetails: {
-                clinicName: clinic.clinicDetails.clinicName,
-                city: clinic.clinicDetails.city,
-                locality: clinic.clinicDetails.locality,
-                streetAddress: clinic.clinicDetails.streetAddress,
-                establishmentType: clinic.clinicDetails.establishmentType,
-                fees: clinic.clinicDetails.fees,
-                verified: clinic.clinicDetails.verified,
-                timings: clinic.clinicDetails.timings ? { ...clinic.clinicDetails.timings } : null,
-                clinicId: clinic.clinicDetails.clinicId
-            },
-            veterinarianDetails: clinic.veterinarianDetails ? {
-                name: clinic.veterinarianDetails.name,
-                experience: clinic.veterinarianDetails.experience,
-                specialization: clinic.veterinarianDetails.specialization,
-                profilePhotoUrl: clinic.veterinarianDetails.profilePhotoUrl,
-                isVerified: clinic.veterinarianDetails.isVerified,
-                vetId: clinic.veterinarianDetails.vetId,
-                gender: clinic.veterinarianDetails.gender,
-                title: clinic.veterinarianDetails.title
-            } : null
-        };
+  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
 
-        router.navigate({
-            pathname: '/pages/ClinicDetailScreen',
-            params: {
-                clinic: JSON.stringify(clinicData)
-            }
-        });
-    };
+  const navigateTo = (screen) => navigation.navigate(screen);
 
-    const handlePetPress = (pet) => {
-        setSelectedPet(pet);
-        setModalVisible(true);
-    };
+  const handlePetPress = (pet) => {
+    setSelectedPet(pet);
+    setModalVisible(true);
+  };
 
-    const renderClinicCard = ({ item }) => {
-        if (!item?.clinicDetails) return null;
-        
-        const clinicDetails = item.clinicDetails;
-        const vet = item?.veterinarianDetails;
+  const handleClinicPress = (clinic) => {
+    navigation.navigate('ClinicDetailScreen', { clinic });
+  };
 
-        return (
-            <TouchableOpacity 
-                style={styles.clinicCard}
-                onPress={() => handleClinicPress(item)}
-            >
-                <View style={styles.clinicImageContainer}>
-                    {vet?.profilePhotoUrl ? (
-                        <Image source={{ uri: vet.profilePhotoUrl }} style={styles.clinicImage} />
-                    ) : (
-                        <View style={styles.clinicImagePlaceholder}>
-                            <MaterialIcons name="business" size={32} color="#4E8D7C" />
-                        </View>
-                    )}
-                </View>
-                <Text style={styles.clinicName} numberOfLines={1}>{clinicDetails.clinicName}</Text>
-                <Text style={styles.clinicType}>{clinicDetails.establishmentType}</Text>
-                <View style={styles.clinicRating}>
-                    <MaterialIcons name="star" size={16} color="#FFC107" />
-                    <Text style={styles.ratingText}>4.8</Text>
-                    <Text style={styles.distanceText}> • {clinicDetails.city}</Text>
-                </View>
-            </TouchableOpacity>
-        );
-    };
+  const handleAppointmentPress = (appointment) => {
+    navigation.navigate('AppointmentDetail', { appointment });
+  };
 
-    const renderPetCard = ({ item }) => {
-        const getPetIcon = () => {
-            const PET_TYPES = {
-                Dog: 'dog',
-                Cat: 'cat',
-                default: 'paw'
-            };
-            return PET_TYPES[item.species] || PET_TYPES.default;
-        };
-
-        return (
-            <TouchableOpacity 
-                style={styles.petCard}
-                onPress={() => handlePetPress(item)}
-            >
-                <View style={styles.petImageContainer}>
-                    {item?.petPhoto ? (
-                        <Image source={{ uri: item.petPhoto }} style={styles.petImage} />
-                    ) : (
-                        <View style={styles.petImagePlaceholder}>
-                            <FontAwesome5
-                                name={getPetIcon()}
-                                size={24}
-                                color="#4E8D7C"
-                            />
-                        </View>
-                    )}
-                </View>
-                <View style={styles.petInfoContainer}>
-                    <Text style={styles.petName} numberOfLines={1}>{item.name}</Text>
-                    <View style={styles.petDetails}>
-                        <Text style={styles.petType}>{item.species}</Text>
-                        {item.breed && (
-                            <Text style={styles.petBreed} numberOfLines={1}>• {item.breed}</Text>
-                        )}
-                    </View>
-                    {item.gender && (
-                        <View style={styles.petGender}>
-                            <MaterialCommunityIcons 
-                                name={item.gender.toLowerCase() === 'male' ? 'gender-male' : 'gender-female'} 
-                                size={16} 
-                                color="#7D7D7D" 
-                            />
-                            <Text style={styles.petGenderText}>{item.gender}</Text>
-                        </View>
-                    )}
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
-    const renderHealthTipCard = ({ item }) => {
-        return (
-            <TouchableOpacity style={styles.healthTipCard}>
-                <View style={styles.healthTipIcon}>
-                    <AlertCircle size={20} color="#4E8D7C" />
-                </View>
-                <View style={styles.healthTipContent}>
-                    <Text style={styles.healthTipTitle}>{item.title}</Text>
-                    <Text style={styles.healthTipDescription}>{item.description}</Text>
-                </View>
-            </TouchableOpacity>
-        );
-    };
-
-    return (
-        <>
-            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
-                        <Menu size={24} color="#1a1a1a" />
-                    </TouchableOpacity>
-                    <View>
-                        <Text style={styles.greeting}>Hello, {user?.name || 'User'}!</Text>
-                        <Text style={styles.subtitle}>Welcome back to your dashboard</Text>
-                    </View>
-                </View>
-
-                <View style={styles.statsContainer}>
-                    {stats.map((stat, index) => (
-                        <View key={index} style={styles.statCard}>
-                            <View style={[styles.statIcon, { backgroundColor: `${stat.color}20` }]}>
-                                <stat.icon size={24} color={stat.color} />
-                            </View>
-                            <Text style={styles.statValue}>{stat.value}</Text>
-                            <Text style={styles.statLabel}>{stat.label}</Text>
-                        </View>
-                    ))}
-                </View>
-
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Quick Actions</Text>
-                    </View>
-                    <View style={styles.actionsGrid}>
-                        {quickActions.map((action) => (
-                            <TouchableOpacity 
-                                key={action.id}
-                                style={[styles.actionCard, { backgroundColor: `${action.color}10` }]}
-                                onPress={() => navigateTo(action.screen)}
-                            >
-                                <View style={[styles.actionIcon, { backgroundColor: `${action.color}20` }]}>
-                                    <action.icon size={24} color={action.color} />
-                                </View>
-                                <Text style={[styles.actionTitle, { color: action.color }]}>{action.title}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>My Pets</Text>
-                        {pets.length > 0 && (
-                            <TouchableOpacity onPress={() => navigateTo('Pets')}>
-                                <Text style={styles.viewAll}>View All</Text>
-                            </TouchableOpacity>
-                        )}
-                    </View>
-                    {pets.length > 0 ? (
-                        <FlatList
-                            horizontal
-                            data={pets}
-                            renderItem={renderPetCard}
-                            keyExtractor={item => item._id}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.petCarouselContainer}
-                        />
-                    ) : (
-                        <View style={styles.noPetsContainer}>
-                            <FontAwesome5 name="paw" size={32} color="#E0E0E0" />
-                            <Text style={styles.noPetsText}>No pets registered yet</Text>
-                            <TouchableOpacity 
-                                style={styles.addPetButton}
-                                onPress={() => navigateTo('Pets')}
-                            >
-                                <Text style={styles.addPetButtonText}>Add a Pet</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
-                </View>
-
-                {clinics.length > 0 && (
-                    <View style={styles.section}>
-                        <View style={styles.sectionHeader}>
-                            <Text style={styles.sectionTitle}>Nearby Clinics</Text>
-                            <TouchableOpacity onPress={() => navigateTo('ClinicList')}>
-                                <Text style={styles.viewAll}>View All</Text>
-                            </TouchableOpacity>
-                        </View>
-                        <FlatList
-                            horizontal
-                            data={clinics.slice(0, 3)}
-                            renderItem={renderClinicCard}
-                            keyExtractor={item => item.clinicDetails?._id || String(Math.random())}
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.carouselContainer}
-                        />
-                    </View>
-                )}
-
-                {/* Health Tips */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={styles.sectionTitle}>Health Tips</Text>
-                        <TouchableOpacity onPress={() => navigateTo('HealthTips')}>
-                            <Text style={styles.viewAll}>View All</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <FlatList
-                        data={healthTips}
-                        renderItem={renderHealthTipCard}
-                        keyExtractor={item => item.id}
-                        scrollEnabled={false}
-                        contentContainerStyle={styles.healthTipsContainer}
-                    />
-                </View>
-            </ScrollView>
-
-            <PetDetailModal 
-                pet={selectedPet}
-                visible={modalVisible}
-                onClose={() => setModalVisible(false)}
+  // Render Pet Card
+  const renderPetCard = ({ item }) => (
+    <TouchableOpacity
+      style={styles.petCard}
+      onPress={() => handlePetPress(item)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.petImageContainer}>
+        {item.petPhoto ? (
+          <Image source={{ uri: item.petPhoto }} style={styles.petImage} />
+        ) : (
+          <LinearGradient
+            colors={['#4E8D7C', '#6BA896']}
+            style={styles.petImagePlaceholder}
+          >
+            <FontAwesome5 name="paw" size={28} color="#fff" />
+          </LinearGradient>
+        )}
+      </View>
+      <View style={styles.petInfo}>
+        <Text style={styles.petName} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={styles.petBreed} numberOfLines={1}>
+          {item.breed || item.species}
+        </Text>
+        <View style={styles.petMetaRow}>
+          <View style={styles.petMeta}>
+            <Ionicons name="calendar-outline" size={12} color="#666" />
+            <Text style={styles.petMetaText}>{item.age || 'N/A'}</Text>
+          </View>
+          <View style={styles.petMeta}>
+            <Ionicons
+              name={item.gender === 'male' ? 'male' : 'female'}
+              size={12}
+              color="#666"
             />
-        </>
+            <Text style={styles.petMetaText}>
+              {item.gender?.charAt(0).toUpperCase()}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <ChevronRight size={20} color="#999" />
+    </TouchableOpacity>
+  );
+
+  // Render Clinic Card
+  const renderClinicCard = ({ item }) => (
+    <TouchableOpacity
+      style={styles.clinicCard}
+      onPress={() => handleClinicPress(item)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.clinicImageContainer}>
+        {item.profilePhotoUrl ? (
+          <Image source={{ uri: item.profilePhotoUrl }} style={styles.clinicImage} />
+        ) : (
+          <LinearGradient
+            colors={['#E8F5E9', '#C8E6C9']}
+            style={styles.clinicImagePlaceholder}
+          >
+            <MaterialIcons name="local-hospital" size={40} color="#4E8D7C" />
+          </LinearGradient>
+        )}
+      </View>
+      <Text style={styles.clinicName} numberOfLines={2}>
+        {item.clinicName}
+      </Text>
+      <Text style={styles.clinicType} numberOfLines={1}>
+        {item.establishmentType}
+      </Text>
+      <View style={styles.clinicDistance}>
+        <MapPin size={12} color="#4E8D7C" />
+        <Text style={styles.clinicDistanceText}>
+          {item.distance || '2.5'} km away
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // Render Appointment Card
+  const renderAppointmentCard = ({ item }) => (
+    <TouchableOpacity
+      style={styles.appointmentCard}
+      onPress={() => handleAppointmentPress(item)}
+      activeOpacity={0.7}
+    >
+      <View style={styles.appointmentLeft}>
+        <View style={styles.appointmentDateBox}>
+          <Text style={styles.appointmentDay}>
+            {new Date(item.date).getDate()}
+          </Text>
+          <Text style={styles.appointmentMonth}>
+            {new Date(item.date).toLocaleString('default', { month: 'short' })}
+          </Text>
+        </View>
+      </View>
+      <View style={styles.appointmentMiddle}>
+        <Text style={styles.appointmentPet} numberOfLines={1}>
+          {item.petName || 'Pet'}
+        </Text>
+        <Text style={styles.appointmentClinic} numberOfLines={1}>
+          {item.clinicName}
+        </Text>
+        <View style={styles.appointmentTimeRow}>
+          <Clock size={12} color="#666" />
+          <Text style={styles.appointmentTime}>{item.time}</Text>
+        </View>
+      </View>
+      <View style={styles.appointmentRight}>
+        <View
+          style={[
+            styles.appointmentStatus,
+            { backgroundColor: item.status === 'confirmed' ? '#E8F5E9' : '#FFF3E0' },
+          ]}
+        >
+          <Text
+            style={[
+              styles.appointmentStatusText,
+              { color: item.status === 'confirmed' ? '#2E7D32' : '#F57C00' },
+            ]}
+          >
+            {item.status}
+          </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  // Render Quick Action Button
+  const QuickActionButton = ({ icon: Icon, label, onPress, gradient }) => (
+    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.7}>
+      <LinearGradient colors={gradient} style={styles.quickActionGradient}>
+        <Icon size={24} color="#fff" />
+      </LinearGradient>
+      <Text style={styles.quickActionLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4E8D7C" />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
     );
+  }
+
+  return (
+    <>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4E8D7C']} />
+        }
+      >
+        {/* Header with Gradient */}
+        <LinearGradient colors={['#4E8D7C', '#6BA896']} style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
+              <Menu size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigateTo('Notifications')} style={styles.notificationButton}>
+              <Bell size={24} color="#fff" />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>3</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerContent}>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.greeting}>Hello,</Text>
+              <Text style={styles.userName}>{parentData?.name || user?.name || 'Pet Parent'}!</Text>
+              <Text style={styles.subGreeting}>
+                {pets.length > 0
+                  ? `You have ${pets.length} ${pets.length === 1 ? 'pet' : 'pets'}`
+                  : 'Add your first pet'}
+              </Text>
+            </View>
+            {parentData?.image && (
+              <Image source={{ uri: parentData.image }} style={styles.profileImage} />
+            )}
+          </View>
+        </LinearGradient>
+
+        {/* Quick Actions */}
+        <View style={styles.quickActionsContainer}>
+          <QuickActionButton
+            icon={Plus}
+            label="Add Pet"
+            onPress={() => navigateTo('AddPet')}
+            gradient={['#FF6B6B', '#FF8E8E']}
+          />
+          <QuickActionButton
+            icon={Calendar}
+            label="Book"
+            onPress={() => navigateTo('pages/Appointments')}
+            gradient={['#4E8D7C', '#6BA896']}
+          />
+          <QuickActionButton
+            icon={MapPin}
+            label="Clinics"
+            onPress={() => navigateTo('pages/ClinicListScreen')}
+            gradient={['#5C6BC0', '#7986CB']}
+          />
+          <QuickActionButton
+            icon={Activity}
+            label="Records"
+            onPress={() => navigateTo('MedicalRecords')}
+            gradient={['#FFA726', '#FFB74D']}
+          />
+        </View>
+
+        {/* Dashboard Stats */}
+        {dashboard && (
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Heart size={24} color="#FF6B6B" />
+              </View>
+              <Text style={styles.statValue}>{dashboard?.stats?.pets || pets.length}</Text>
+              <TouchableOpacity onPress={() => navigateTo('pages/PetList')}>
+              <Text style={styles.seeAll}>My Pets</Text>
+            </TouchableOpacity>
+            </View>
+            {/* <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Pets</Text>
+            <TouchableOpacity onPress={() => navigateTo('pages/PetList')}>
+              <Text style={styles.seeAll}>See All</Text>
+            </TouchableOpacity>
+          </View> */}
+            
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Calendar size={24} color="#4E8D7C" />
+              </View>
+              <Text style={styles.statValue}>{dashboard?.stats?.appointments || 0}</Text>
+              {/* <Text style={styles.statLabel}>Appointments</Text> */}
+              <TouchableOpacity onPress={() => navigateTo('pages/Appointments')}>
+              <Text style={styles.seeAll}>Appointments</Text>
+            </TouchableOpacity>
+            </View>
+            <View style={styles.statCard}>
+              <View style={styles.statIconContainer}>
+                <Stethoscope size={24} color="#5C6BC0" />
+              </View>
+              <Text style={styles.statValue}>{dashboard?.stats?.visits || 0}</Text>
+              <Text style={styles.statLabel}>Visits</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Upcoming Appointments */}
+        {appointments.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
+              <TouchableOpacity onPress={() => navigateTo('pages/Appointments')}>
+                <Text style={styles.seeAll}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={appointments.slice(0, 3)}
+              renderItem={renderAppointmentCard}
+              keyExtractor={(item) => item._id}
+              scrollEnabled={false}
+            />
+          </View>
+        )}
+
+        {/* My Pets */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>My Pets</Text>
+            <TouchableOpacity onPress={() => navigateTo('pages/PetList')}>
+              <Text style={styles.seeAll}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          {pets.length > 0 ? (
+            <FlatList
+              data={pets}
+              renderItem={renderPetCard}
+              keyExtractor={(item) => item._id}
+              scrollEnabled={false}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <FontAwesome5 name="paw" size={48} color="#ccc" />
+              <Text style={styles.emptyStateText}>No pets added yet</Text>
+              <TouchableOpacity
+                style={styles.addPetButton}
+                onPress={() => navigateTo('pages/PetDetail')}
+              >
+                <Text style={styles.addPetButtonText}>Add Your First Pet</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Nearby Clinics */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Nearby Clinics</Text>
+            <TouchableOpacity onPress={() => navigateTo('pages/ClinicListScreen')}>
+              <Text style={styles.seeAll}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          {clinics.length > 0 ? (
+            <FlatList
+              horizontal
+              data={clinics}
+              renderItem={renderClinicCard}
+              keyExtractor={(item) => item._id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.clinicsList}
+            />
+          ) : (
+            <View style={styles.emptyState}>
+              <MaterialIcons name="location-off" size={48} color="#ccc" />
+              <Text style={styles.emptyStateText}>No clinics found nearby</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Parent Info Card (Optional) */}
+        {parentData && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>My Profile</Text>
+            <TouchableOpacity
+              style={styles.profileCard}
+              onPress={() => navigateTo('Profile')}
+            >
+              <View style={styles.profileCardLeft}>
+                <Ionicons name="person-circle-outline" size={24} color="#4E8D7C" />
+                <View style={styles.profileCardInfo}>
+                  <Text style={styles.profileCardName}>{parentData.name}</Text>
+                  <Text style={styles.profileCardEmail}>{parentData.email}</Text>
+                  <Text style={styles.profileCardPhone}>{parentData.phone}</Text>
+                </View>
+              </View>
+              <ChevronRight size={20} color="#999" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={{ height: 30 }} />
+      </ScrollView>
+
+      <PetDetailModal
+        pet={selectedPet}
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8f9fa',
-        paddingBottom: 30,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 24,
-        paddingTop: 60,
-        backgroundColor: '#fff',
-        borderBottomWidth: 1,
-        borderBottomColor: '#e1e5e9',
-    },
-    menuButton: {
-        marginRight: 20,
-    },
-    greeting: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
-        marginBottom: 4,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#666',
-    },
-    statsContainer: {
-        flexDirection: 'row',
-        padding: 24,
-        gap: 16,
-    },
-    statCard: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e1e5e9',
-    },
-    statIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    statValue: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
-        marginBottom: 4,
-    },
-    statLabel: {
-        fontSize: 14,
-        color: '#666',
-    },
-    section: {
-        paddingHorizontal: 24,
-        marginBottom: 24,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1a1a1a',
-    },
-    viewAll: {
-        color: '#007AFF',
-        fontSize: 14,
-        fontWeight: '500',
-    },
-    actionsGrid: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        gap: 16,
-    },
-    actionCard: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e1e5e9',
-    },
-    actionIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    actionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        textAlign: 'center',
-    },
-    carouselContainer: {
-        paddingBottom: 10,
-    },
-    petCarouselContainer: {
-        paddingBottom: 10,
-        paddingRight: 24,
-    },
-    clinicCard: {
-        width: 200,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginRight: 16,
-        borderWidth: 1,
-        borderColor: '#e1e5e9',
-    },
-    clinicImageContainer: {
-        width: '100%',
-        height: 120,
-        borderRadius: 12,
-        backgroundColor: '#f0f7f4',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    clinicImage: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 12,
-    },
-    clinicImagePlaceholder: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: '#e8f5e9',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    clinicName: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1a1a1a',
-        marginBottom: 4,
-    },
-    clinicType: {
-        fontSize: 14,
-        color: '#666',
-        marginBottom: 8,
-    },
-    clinicRating: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    ratingText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#1a1a1a',
-        marginLeft: 4,
-    },
-    distanceText: {
-        fontSize: 14,
-        color: '#666',
-    },
-    petCard: {
-        width: 280,
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 16,
-        marginRight: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e1e5e9',
-    },
-    petImageContainer: {
-        width: 80,
-        height: 80,
-        borderRadius: 12,
-        backgroundColor: '#f0f7f4',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 16,
-    },
-    petImage: {
-        width: '100%',
-        height: '100%',
-        borderRadius: 12,
-    },
-    petImagePlaceholder: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#e8f5e9',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    petInfoContainer: {
-        flex: 1,
-    },
-    petName: {
-        fontSize: 18,
-        fontWeight: '700',
-        color: '#1a1a1a',
-        marginBottom: 4,
-    },
-    petDetails: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: 8,
-    },
-    petType: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#4E8D7C',
-    },
-    petBreed: {
-        fontSize: 14,
-        color: '#666',
-        marginLeft: 4,
-        flexShrink: 1,
-    },
-    petGender: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    petGenderText: {
-        fontSize: 14,
-        color: '#666',
-        marginLeft: 4,
-    },
-    noPetsContainer: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
-        padding: 20,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e1e5e9',
-    },
-    noPetsText: {
-        fontSize: 16,
-        color: '#666',
-        marginTop: 8,
-        marginBottom: 16,
-    },
-    addPetButton: {
-        backgroundColor: '#4E8D7C',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 8,
-    },
-    addPetButtonText: {
-        color: '#fff',
-        fontWeight: '600',
-    },
-    healthTipsContainer: {
-        gap: 12,
-    },
-    healthTipCard: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
-        padding: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e1e5e9',
-    },
-    healthTipIcon: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#e8f5e9',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    healthTipContent: {
-        flex: 1,
-    },
-    healthTipTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#1a1a1a',
-        marginBottom: 4,
-    },
-    healthTipDescription: {
-        fontSize: 14,
-        color: '#666',
-    },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F7FA',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F5F7FA',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  header: {
+    paddingTop: 50,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  menuButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: '#FF6B6B',
+    borderRadius: 10,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
+  greeting: {
+    fontSize: 16,
+    color: '#fff',
+    opacity: 0.9,
+  },
+  userName: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginTop: 4,
+  },
+  subGreeting: {
+    fontSize: 14,
+    color: '#fff',
+    opacity: 0.8,
+    marginTop: 4,
+  },
+  profileImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: '#fff',
+  },
+  quickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 20,
+    marginTop: -25,
+    marginBottom: 20,
+  },
+  quickAction: {
+    alignItems: 'center',
+  },
+  quickActionGradient: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  quickActionLabel: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#333',
+    fontWeight: '600',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  statIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F5F7FA',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginTop: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
+  },
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  seeAll: {
+    fontSize: 14,
+    color: '#4E8D7C',
+    fontWeight: '600',
+  },
+  petCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  petImageContainer: {
+    marginRight: 16,
+  },
+  petImage: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+  },
+  petImagePlaceholder: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  petInfo: {
+    flex: 1,
+  },
+  petName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  petBreed: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  petMetaRow: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  petMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  petMetaText: {
+    fontSize: 12,
+    color: '#666',
+  },
+  clinicsList: {
+    paddingRight: 20,
+  },
+  clinicCard: {
+    width: 160,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 12,
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  clinicImageContainer: {
+    width: '100%',
+    height: 100,
+    borderRadius: 12,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  clinicImage: {
+    width: '100%',
+    height: '100%',
+  },
+  clinicImagePlaceholder: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  clinicName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+    minHeight: 36,
+  },
+  clinicType: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 8,
+  },
+  clinicDistance: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  clinicDistanceText: {
+    fontSize: 12,
+    color: '#4E8D7C',
+    fontWeight: '600',
+  },
+  appointmentCard: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  appointmentLeft: {
+    marginRight: 16,
+  },
+  appointmentDateBox: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: '#4E8D7C',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appointmentDay: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  appointmentMonth: {
+    fontSize: 12,
+    color: '#fff',
+    textTransform: 'uppercase',
+  },
+  appointmentMiddle: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  appointmentPet: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  appointmentClinic: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 6,
+  },
+  appointmentTimeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  appointmentTime: {
+    fontSize: 12,
+    color: '#666',
+  },
+  appointmentRight: {
+    justifyContent: 'center',
+  },
+  appointmentStatus: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  appointmentStatusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'capitalize',
+  },
+  emptyState: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 16,
+  },
+  addPetButton: {
+    marginTop: 16,
+    backgroundColor: '#4E8D7C',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  addPetButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  profileCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  profileCardInfo: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  profileCardName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  profileCardEmail: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 2,
+  },
+  profileCardPhone: {
+    fontSize: 13,
+    color: '#666',
+  },
 });

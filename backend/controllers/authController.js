@@ -42,7 +42,7 @@ const register = catchAsync(async (req, res, next) => {
   });
 
   // Updated role validation
-  if (role && !['veterinarian', 'vetician', 'peravet', 'pet_resort'].includes(role)) {
+  if (role && !['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(role)) {
     console.log('❌ REGISTER API - Invalid role specified:', role);
     return next(new AppError('Invalid role specified', 400));
   }
@@ -133,7 +133,7 @@ const deleteAccount = catchAsync(async (req, res, next) => {
   }
 
   // Validate login type
-  if (!['veterinarian', 'vetician', 'peravet', 'pet_resort'].includes(loginType)) {
+  if (!['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(loginType)) {
     return next(new AppError('Invalid login type specified', 400));
   }
 
@@ -215,7 +215,7 @@ const login = catchAsync(async (req, res, next) => {
   });
 
   // Updated to accept new roles
-  if (!['veterinarian', 'vetician', 'peravet', 'pet_resort'].includes(loginType)) {
+  if (!['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(loginType)) {
     console.log('❌ LOGIN API - Invalid login type:', loginType);
     return next(new AppError('Invalid login type specified', 400));
   }
@@ -1351,7 +1351,11 @@ const getAllClinicsWithVets = catchAsync(async (req, res, next) => {
   const clinics = await Clinic.find({ verified: true }).lean();
 
   if (!clinics || clinics.length === 0) {
-    return next(new AppError('No verified clinics found', 404));
+    return res.status(200).json({
+      success: true,
+      count: 0,
+      data: []
+    });
   }
 
   // 2. Get all unique user IDs from clinics
@@ -1501,6 +1505,118 @@ const createAppointment = catchAsync(async (req, res, next) => {
 
 
 
+// OTP Storage (In production, use Redis or database)
+const otpStorage = new Map();
+
+// Generate random 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Send OTP using Fast2SMS (for Indian numbers)
+const sendOTP = catchAsync(async (req, res, next) => {
+  const { phoneNumber } = req.body;
+  
+  console.log('📞 Received OTP request for:', phoneNumber);
+  
+  if (!phoneNumber) {
+    return next(new AppError('Phone number is required', 400));
+  }
+  
+  const otp = generateOTP();
+  const verificationId = 'verify_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  
+  console.log('🔢 Generated OTP:', otp);
+  
+  // Store OTP with 5 minute expiry
+  otpStorage.set(verificationId, {
+    phoneNumber,
+    otp,
+    expiresAt: Date.now() + 5 * 60 * 1000
+  });
+  
+  try {
+    const axios = require('axios');
+    
+    // Clean phone number (remove +91)
+    const cleanPhone = phoneNumber.replace('+91', '').replace('+', '');
+    console.log('📤 Sending SMS to:', cleanPhone);
+    console.log('🔑 API Key:', process.env.FAST2SMS_API_KEY ? 'Found' : 'Missing');
+    
+    const response = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
+      route: 'v3',
+      sender_id: 'FSTSMS',
+      message: `Your Vetician OTP is ${otp}. Valid for 5 minutes.`,
+      language: 'english',
+      flash: 0,
+      numbers: cleanPhone
+    }, {
+      headers: {
+        'authorization': process.env.FAST2SMS_API_KEY,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    console.log('✅ Fast2SMS response:', response.data);
+    
+    res.status(200).json({
+      success: true,
+      message: 'OTP sent successfully',
+      verificationId
+    });
+  } catch (error) {
+    console.error('❌ SMS Error:', error.message);
+    if (error.response) {
+      console.error('❌ Response data:', error.response.data);
+      console.error('❌ Response status:', error.response.status);
+    }
+    console.log(`📱 OTP for ${phoneNumber}: ${otp}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'OTP generated (check console for testing)',
+      verificationId,
+      otp: otp // For testing
+    });
+  }
+});
+
+// Verify OTP
+const verifyOTP = catchAsync(async (req, res, next) => {
+  const { phoneNumber, otp, verificationId } = req.body;
+  
+  if (!phoneNumber || !otp || !verificationId) {
+    return next(new AppError('Phone number, OTP, and verification ID are required', 400));
+  }
+  
+  const storedData = otpStorage.get(verificationId);
+  
+  if (!storedData) {
+    return next(new AppError('Invalid or expired verification ID', 400));
+  }
+  
+  if (Date.now() > storedData.expiresAt) {
+    otpStorage.delete(verificationId);
+    return next(new AppError('OTP has expired', 400));
+  }
+  
+  if (storedData.phoneNumber !== phoneNumber) {
+    return next(new AppError('Phone number mismatch', 400));
+  }
+  
+  if (storedData.otp !== otp) {
+    return next(new AppError('Invalid OTP', 400));
+  }
+  
+  otpStorage.delete(verificationId);
+  
+  res.status(200).json({
+    success: true,
+    message: 'OTP verified successfully',
+    phoneNumber
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -1532,5 +1648,7 @@ module.exports = {
   getAllClinicsWithVets,
   createAppointment,
   getPetsByUserId,
-  deleteAccount
+  deleteAccount,
+  sendOTP,
+  verifyOTP
 };

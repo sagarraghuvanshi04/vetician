@@ -1,5 +1,8 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-console.log(API_BASE_URL)
+// ✅ EXPO SAFE ENV
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_URL || 'https://vetician-backend.onrender.com/api';
+
+console.log('API_BASE_URL:', API_BASE_URL);
 
 class ApiService {
   constructor() {
@@ -7,7 +10,10 @@ class ApiService {
   }
 
   async request(endpoint, options = {}) {
-    const token = localStorage.getItem('token');
+    const token =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('token')
+        : null;
 
     const config = {
       headers: {
@@ -20,7 +26,8 @@ class ApiService {
 
     try {
       const response = await fetch(`${this.baseURL}${endpoint}`, config);
-      const data = await response.json();
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(data.message || 'API request failed');
@@ -28,72 +35,81 @@ class ApiService {
 
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      console.error('❌ API Error:', error.message);
       throw error;
     }
   }
 
-  // Veterinarian endpoints
-  async getVerifiedVeterinarians(filters = {}) {
-    const params = new URLSearchParams(filters);
-    return this.request(`/admin/verified?${params}`, {
+  /* =========================
+     VETERINARIAN
+  ========================= */
+
+  getVerifiedVeterinarians(filters = {}) {
+    return this.request('/admin/verified', {
       method: 'POST',
+      body: JSON.stringify(filters),
     });
   }
 
-  async getUnverifiedVeterinarians() {
+  getUnverifiedVeterinarians() {
     return this.request('/admin/unverified', {
       method: 'POST',
     });
   }
 
-  async verifyVeterinarianField(veterinarianId, fieldName) {
+  verifyVeterinarianField(veterinarianId, fieldName) {
     return this.request(`/verify/${veterinarianId}/${fieldName}`, {
       method: 'PATCH',
     });
   }
 
-  // Clinic endpoints
-  async getVerifiedClinics(filters = {}) {
-    const params = new URLSearchParams(filters);
-    return this.request(`/admin/verified/clinic?${params}`, {
+  /* =========================
+     CLINIC
+  ========================= */
+
+  getVerifiedClinics(filters = {}) {
+    return this.request('/admin/verified/clinic', {
       method: 'POST',
+      body: JSON.stringify(filters),
     });
   }
 
-  async getUnverifiedClinics() {
+  getUnverifiedClinics() {
     return this.request('/admin/unverified/clinic', {
       method: 'POST',
     });
   }
 
-  async verifyClinic(clinicId) {
+  verifyClinic(clinicId) {
     return this.request(`/admin/clinic/verify/${clinicId}`, {
       method: 'POST',
     });
   }
 
-  // Pet Resort endpoints
-  async getVerifiedPetResorts(filters = {}) {
-    const params = new URLSearchParams(filters);
-    return this.request(`/admin/verified/petresort?${params}`, {
+  /* =========================
+     PET RESORT
+  ========================= */
+
+  getVerifiedPetResorts(filters = {}) {
+    return this.request('/admin/verified/petresort', {
       method: 'POST',
+      body: JSON.stringify(filters),
     });
   }
 
-  async getUnverifiedPetResorts() {
+  getUnverifiedPetResorts() {
     return this.request('/admin/unverified/petresort', {
       method: 'POST',
     });
   }
 
-  async verifyPetResort(resortId) {
+  verifyPetResort(resortId) {
     return this.request(`/admin/petresort/verify/${resortId}`, {
       method: 'POST',
     });
   }
 
-  async unverifyPetResort(resortId) {
+  unverifyPetResort(resortId) {
     return this.request(`/admin/petresort/unverify/${resortId}`, {
       method: 'POST',
     });

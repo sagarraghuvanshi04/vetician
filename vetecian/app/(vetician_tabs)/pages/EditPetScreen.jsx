@@ -266,12 +266,14 @@ const EditPetScreen = () => {
       })).unwrap();
 
       if (result.success) {
+        // Refresh the pets list to get updated data
+        await dispatch(getPetsByUserId());
+        
         Alert.alert(
           'Success',
           'Pet updated successfully!',
           [{
             text: 'OK', onPress: () => {
-              dispatch(getPetsByUserId());
               router.back();
             }
           }]

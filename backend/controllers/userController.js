@@ -74,6 +74,36 @@ const deleteAccount = catchAsync(async (req, res, next) => {
   });
 });
 
+// Get dashboard summary for Veterinarians
+const getDashboardStats = catchAsync(async (req, res, next) => {
+  
+  if (req.user.role !== 'veterinarian') {
+    return next(new AppError('Access denied. Only veterinarians can access this dashboard.', 403));
+  }
+
+  
+  const stats = {
+    patients: 24, // Placeholder: await Patient.countDocuments({ vetId: req.user._id })
+    appointments: 12,
+    surgeries: 3,
+  };
+
+  // 3. Recent activities/patients fetch karein
+  const recentPatients = [
+    { id: '1', name: 'Max', breed: 'Golden Retriever', time: '10:00 AM', status: 'Annual checkup' },
+    { id: '2', name: 'Whiskers', breed: 'Persian Cat', time: '11:30 AM', status: 'Vaccination' },
+    { id: '3', name: 'Rocky', breed: 'German Shepherd', time: '2:00 PM', status: 'Post-op' },
+  ];
+
+  res.status(200).json({
+    success: true,
+    stats,
+    recentPatients
+  });
+});
+
+
+
 // Get veterinarian public profile (unverified data)
 const getVeterinarianPublicProfile = catchAsync(async (req, res, next) => {
   const { id } = req.params;
@@ -131,6 +161,7 @@ module.exports = {
   getProfile,
   updateProfile,
   changePassword,
+  getDashboardStats,
   deleteAccount,
   getVeterinarianPublicProfile,
   getVeterinarianAdmin,

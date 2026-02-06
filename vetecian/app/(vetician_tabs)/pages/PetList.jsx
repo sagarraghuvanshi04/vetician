@@ -1,13 +1,13 @@
 // import React, { useState, useEffect } from 'react';
 // import {
-//     View,
-//     Text,
-//     StyleSheet,
-//     TouchableOpacity,
-//     ActivityIndicator,
-//     FlatList,
-//     Image,
-//     Dimensions
+//   View,
+//   Text,
+//   StyleSheet,
+//   TouchableOpacity,
+//   ActivityIndicator,
+//   FlatList,
+//   Dimensions,
+//   Image
 // } from 'react-native';
 // import { MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 // import { useDispatch, useSelector } from 'react-redux';
@@ -18,1501 +18,459 @@
 
 // const { width } = Dimensions.get('window');
 // const PET_TYPES = {
-//     Dog: 'dog',
-//     Cat: 'cat',
-//     default: 'paw'
-// };
-
-// const PetCard = ({ pet, onPress }) => {
-//     if (!pet) return null;
-
-//     const getPetIcon = () => {
-//         return PET_TYPES[pet.species] || PET_TYPES.default;
-//     };
-
-//     return (
-//         <TouchableOpacity style={styles.card} onPress={onPress}>
-//             <View style={styles.cardImageContainer}>
-//                 {pet?.petPhoto ? (
-//                     <Image source={{ uri: pet.petPhoto }} style={styles.profileImage} />
-//                 ) : (
-//                     <View style={styles.profilePlaceholder}>
-//                         <FontAwesome5
-//                             name={getPetIcon()}
-//                             size={32}
-//                             color="#4E8D7C"
-//                         />
-//                     </View>
-//                 )}
-//             </View>
-
-//             <View style={styles.cardContent}>
-//                 <View style={styles.cardHeader}>
-//                     <Text style={styles.petName} numberOfLines={1}>{pet.name}</Text>
-//                     <View style={styles.typeBadge}>
-//                         <Text style={styles.typeText}>{pet.species}</Text>
-//                     </View>
-//                 </View>
-
-//                 <View style={styles.detailsRow}>
-//                     <View style={styles.detailItem}>
-//                         <MaterialCommunityIcons name="gender-male-female" size={16} color="#7D7D7D" />
-//                         <Text style={styles.detailText}>{pet.gender}</Text>
-//                     </View>
-//                     {pet.breed && (
-//                         <View style={styles.detailItem}>
-//                             <FontAwesome5 name="dna" size={14} color="#7D7D7D" />
-//                             <Text style={styles.detailText}>{pet.breed}</Text>
-//                         </View>
-//                     )}
-//                 </View>
-
-//                 {pet.dob && (
-//                     <View style={styles.detailsRow}>
-//                         <View style={styles.detailItem}>
-//                             <MaterialIcons name="cake" size={16} color="#7D7D7D" />
-//                             <Text style={styles.detailText}>
-//                                 {new Date(pet.dob).toLocaleDateString()}
-//                             </Text>
-//                         </View>
-//                     </View>
-//                 )}
-
-//                 <View style={styles.statsContainer}>
-//                     {pet.weight && <StatItem value={`${pet.weight} kg`} label="Weight" />}
-//                     {pet.height && <StatItem value={`${pet.height} cm`} label="Height" />}
-//                     {pet.age && <StatItem value={pet.age} label="Age" />}
-//                 </View>
-//             </View>
-//         </TouchableOpacity>
-//     );
-// };
-
-// const StatItem = ({ value, label }) => (
-//     <View style={styles.statItem}>
-//         <Text style={styles.statValue}>{value}</Text>
-//         <Text style={styles.statLabel}>{label}</Text>
-//     </View>
-// );
-
-// const PetListScreen = () => {
-//     const dispatch = useDispatch();
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState(null);
-//     const [refreshing, setRefreshing] = useState(false);
-//     const [selectedPet, setSelectedPet] = useState(null);
-//     const [modalVisible, setModalVisible] = useState(false);
-
-//     const pets = useSelector(state => state.auth?.userPets?.data || []);
-
-//     useEffect(() => {
-//         fetchPets();
-//         return () => dispatch(clearUserPets());
-//     }, [dispatch]);
-
-//     const fetchPets = async () => {
-//         try {
-//             setLoading(true);
-//             const result = await dispatch(getPetsByUserId()).unwrap();
-//             if (result.error) throw new Error(result.payload || 'Failed to load pets');
-//         } catch (err) {
-//             setError(err.message);
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const handleRefresh = async () => {
-//         try {
-//             setRefreshing(true);
-//             await dispatch(getPetsByUserId());
-//         } catch (err) {
-//             setError(err.message);
-//         } finally {
-//             setRefreshing(false);
-//         }
-//     };
-
-//     const handlePetPress = (pet) => {
-//         setSelectedPet(pet);
-//         setModalVisible(true);
-//     };
-
-//     if (loading && !refreshing) return <LoadingView />;
-//     if (error) return <ErrorView error={error} onRetry={() => {
-//         setError(null);
-//         dispatch(getPetsByUserId());
-//     }} />;
-
-//     return (
-//         <View style={styles.container}>
-//             <Header />
-
-//             <View style={styles.resultsContainer}>
-//                 <Text style={styles.resultsText}>
-//                     {pets.length} {pets.length === 1 ? 'Pet' : 'Pets'} Registered
-//                 </Text>
-//                 <TouchableOpacity onPress={handleRefresh}>
-//                     <MaterialIcons name="refresh" size={24} color="#4E8D7C" />
-//                 </TouchableOpacity>
-//             </View>
-
-//             {pets.length === 0 ? (
-//                 <EmptyState onAddPet={() => router.navigate('/pages/PetDetail')} />
-//             ) : (
-//                 <>
-//                     <FlatList
-//                         data={pets}
-//                         renderItem={({ item }) => <PetCard pet={item} onPress={() => handlePetPress(item)} />}
-//                         keyExtractor={(item) => item._id || String(Math.random())}
-//                         contentContainerStyle={styles.listContainer}
-//                         showsVerticalScrollIndicator={false}
-//                         refreshing={refreshing}
-//                         onRefresh={handleRefresh}
-//                     />
-//                     <TouchableOpacity
-//                         style={styles.addButtonFloating}
-//                         onPress={() => router.navigate('/pages/PetDetail')}
-//                     >
-//                         <MaterialIcons name="add" size={28} color="white" />
-//                     </TouchableOpacity>
-                    
-//                     <PetDetailsModal
-//                         pet={selectedPet}
-//                         visible={modalVisible}
-//                         onClose={() => setModalVisible(false)}
-//                     />
-//                 </>
-//             )}
-//         </View>
-//     );
-// };
-
-// const Header = () => (
-//     <View style={styles.header}>
-//         <TouchableOpacity onPress={() => router.back()} style={styles.menuButton}>
-//             <ChevronLeft size={24} color="#1a1a1a" />
-//         </TouchableOpacity>
-//         <View>
-//             <Text style={styles.headerTitle}>My Pets</Text>
-//             <Text style={styles.headerSubtitle}>Your registered companions</Text>
-//         </View>
-//     </View>
-// );
-
-// const LoadingView = () => (
-//     <View style={styles.loadingContainer}>
-//         <ActivityIndicator size="large" color="#4E8D7C" />
-//         <Text style={styles.loadingText}>Loading your pets...</Text>
-//     </View>
-// );
-
-// const ErrorView = ({ error, onRetry }) => (
-//     <View style={styles.errorContainer}>
-//         <MaterialIcons name="error-outline" size={50} color="#E74C3C" />
-//         <Text style={styles.errorText}>{error}</Text>
-//         <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-//             <Text style={styles.retryButtonText}>Try Again</Text>
-//         </TouchableOpacity>
-//     </View>
-// );
-
-// const EmptyState = ({ onAddPet }) => (
-//     <View style={styles.emptyContainer}>
-//         <FontAwesome5 name="paw" size={60} color="#E0E0E0" />
-//         <Text style={styles.emptyTitle}>No Pets Found</Text>
-//         <Text style={styles.emptyText}>You haven't registered any pets yet</Text>
-//         <TouchableOpacity style={styles.addPetButton} onPress={onAddPet}>
-//             <Text style={styles.addPetButtonText}>Register a Pet</Text>
-//         </TouchableOpacity>
-//     </View>
-// );
-
-// const styles = StyleSheet.create({
-//     container: {
-//         flex: 1,
-//         backgroundColor: '#F8F9FA',
-//         paddingHorizontal: 16,
-//         paddingTop: 50
-//     },
-//     header: {
-//         marginBottom: 20,
-//         paddingHorizontal: 8,
-//         display: "flex",
-//         flexDirection: 'row'
-//     },
-//     headerTitle: {
-//         fontSize: 28,
-//         fontWeight: '700',
-//         color: '#2C3E50',
-//         marginBottom: 4
-//     },
-//     headerSubtitle: {
-//         fontSize: 16,
-//         color: '#7D7D7D'
-//     },
-//     loadingContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         backgroundColor: '#F8F9FA'
-//     },
-//     loadingText: {
-//         marginTop: 16,
-//         color: '#4E8D7C',
-//         fontSize: 16
-//     },
-//     errorContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         padding: 20,
-//         backgroundColor: '#F8F9FA'
-//     },
-//     errorText: {
-//         fontSize: 16,
-//         color: '#E74C3C',
-//         marginVertical: 20,
-//         textAlign: 'center'
-//     },
-//     retryButton: {
-//         backgroundColor: '#4E8D7C',
-//         padding: 12,
-//         borderRadius: 8,
-//         marginTop: 10
-//     },
-//     retryButtonText: {
-//         color: 'white',
-//         fontWeight: '600'
-//     },
-//     resultsContainer: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         alignItems: 'center',
-//         marginBottom: 16,
-//         paddingHorizontal: 8
-//     },
-//     resultsText: {
-//         color: '#2C3E50',
-//         fontSize: 16,
-//         fontWeight: '600'
-//     },
-//     emptyContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         padding: 40
-//     },
-//     emptyTitle: {
-//         fontSize: 22,
-//         fontWeight: '600',
-//         color: '#2C3E50',
-//         marginTop: 16
-//     },
-//     emptyText: {
-//         fontSize: 16,
-//         color: '#7D7D7D',
-//         textAlign: 'center',
-//         marginTop: 8,
-//         marginBottom: 24
-//     },
-//     addPetButton: {
-//         paddingHorizontal: 24,
-//         paddingVertical: 12,
-//         backgroundColor: '#4E8D7C',
-//         borderRadius: 8
-//     },
-//     addPetButtonText: {
-//         color: 'white',
-//         fontWeight: '600'
-//     },
-//     listContainer: {
-//         paddingBottom: 30
-//     },
-//     card: {
-//         backgroundColor: 'white',
-//         borderRadius: 16,
-//         padding: 16,
-//         marginBottom: 16,
-//         flexDirection: 'row',
-//         shadowColor: '#000',
-//         shadowOffset: { width: 0, height: 2 },
-//         shadowOpacity: 0.08,
-//         shadowRadius: 8,
-//         elevation: 3
-//     },
-//     cardImageContainer: {
-//         shadowColor: '#000',
-//         shadowOffset: { width: 0, height: 2 },
-//         shadowOpacity: 0.1,
-//         shadowRadius: 4,
-//         elevation: 2
-//     },
-//     profileImage: {
-//         width: 90,
-//         height: 90,
-//         borderRadius: 12,
-//         marginRight: 16
-//     },
-//     profilePlaceholder: {
-//         width: 90,
-//         height: 90,
-//         borderRadius: 12,
-//         backgroundColor: '#F0F7F4',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         marginRight: 16
-//     },
-//     cardContent: {
-//         flex: 1
-//     },
-//     cardHeader: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         alignItems: 'center',
-//         marginBottom: 8
-//     },
-//     petName: {
-//         fontSize: 18,
-//         fontWeight: '700',
-//         color: '#2C3E50',
-//         flex: 1,
-//         marginRight: 10
-//     },
-//     typeBadge: {
-//         paddingHorizontal: 10,
-//         paddingVertical: 4,
-//         borderRadius: 12,
-//         backgroundColor: '#E8F5E9',
-//         borderColor: '#4E8D7C',
-//         borderWidth: 1
-//     },
-//     typeText: {
-//         fontSize: 12,
-//         color: '#4E8D7C',
-//         fontWeight: '600'
-//     },
-//     detailsRow: {
-//         flexDirection: 'row',
-//         marginBottom: 8
-//     },
-//     detailItem: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         marginRight: 16
-//     },
-//     detailText: {
-//         fontSize: 14,
-//         color: '#555',
-//         marginLeft: 4
-//     },
-//     statsContainer: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         marginTop: 8,
-//         paddingTop: 8,
-//         borderTopWidth: 1,
-//         borderTopColor: '#EEE'
-//     },
-//     statItem: {
-//         alignItems: 'center'
-//     },
-//     statValue: {
-//         fontSize: 16,
-//         fontWeight: '600',
-//         color: '#2C3E50'
-//     },
-//     statLabel: {
-//         fontSize: 12,
-//         color: '#7D7D7D',
-//         marginTop: 2
-//     },
-//     menuButton: {
-//         marginRight: 20,
-//         justifyContent: 'center',
-//         padding: 5
-//     },
-//     addButtonFloating: {
-//         position: 'absolute',
-//         bottom: 30,
-//         right: 30,
-//         width: 60,
-//         height: 60,
-//         borderRadius: 30,
-//         backgroundColor: '#4E8D7C',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         shadowColor: '#000',
-//         shadowOffset: { width: 0, height: 2 },
-//         shadowOpacity: 0.3,
-//         shadowRadius: 4,
-//         elevation: 5
-//     }
-// });
-
-// export default PetListScreen;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import React, { useState, useEffect } from 'react';
-// import {
-//     View,
-//     Text,
-//     StyleSheet,
-//     TouchableOpacity,
-//     ActivityIndicator,
-//     FlatList,
-//     Image,
-//     Dimensions,
-//     Modal,
-//     ScrollView,
-//     TextInput,
-//     TouchableWithoutFeedback,
-//     Alert
-// } from 'react-native';
-// import { MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { getPetsByUserId, clearUserPets, updatePet } from '../../../store/slices/authSlice';
-// import { router } from 'expo-router';
-// import { ChevronLeft } from 'lucide-react-native';
-// import PetDetailsModal from '../../../components/petparent/home/PetDetailModal';
-// import * as ImagePicker from 'expo-image-picker';
-// import * as FileSystem from 'expo-file-system';
-
-// const { width } = Dimensions.get('window');
-// const PET_TYPES = {
-//     Dog: 'dog',
-//     Cat: 'cat',
-//     default: 'paw'
+//   Dog: 'dog',
+//   Cat: 'cat',
+//   default: 'paw'
 // };
 
 // const PetCard = ({ pet, onPress, onEdit }) => {
-//     if (!pet) return null;
+//   if (!pet) return null;
 
-//     const getPetIcon = () => {
-//         return PET_TYPES[pet.species] || PET_TYPES.default;
-//     };
+//   const getPetIcon = () => {
+//     return PET_TYPES[pet.species] || PET_TYPES.default;
+//   };
 
-//     return (
-//         <TouchableOpacity style={styles.card} onPress={onPress}>
-//             <View style={styles.cardImageContainer}>
-//                 {pet?.petPhoto ? (
-//                     <Image source={{ uri: pet.petPhoto }} style={styles.profileImage} />
-//                 ) : (
-//                     <View style={styles.profilePlaceholder}>
-//                         <FontAwesome5
-//                             name={getPetIcon()}
-//                             size={32}
-//                             color="#4E8D7C"
-//                         />
-//                     </View>
-//                 )}
+//   return (
+//     <TouchableOpacity style={styles.card} onPress={onPress}>
+//       <View style={styles.cardImageContainer}>
+//         {pet?.petPhoto ? (
+//           <Image source={{ uri: pet.petPhoto }} style={styles.profileImage} />
+//         ) : (
+//           <View style={styles.profilePlaceholder}>
+//             <FontAwesome5
+//               name={getPetIcon()}
+//               size={32}
+//               color="#4E8D7C"
+//             />
+//           </View>
+//         )}
+//       </View>
+
+//       <View style={styles.cardContent}>
+//         <View style={styles.cardHeader}>
+//           <Text style={styles.petName} numberOfLines={1}>{pet.name}</Text>
+//           <View style={styles.typeBadge}>
+//             <Text style={styles.typeText}>{pet.species}</Text>
+//           </View>
+//           <TouchableOpacity onPress={(e) => {
+//             e.stopPropagation();
+//             onEdit();
+//           }}>
+//             <MaterialIcons name="edit" size={20} color="#4E8D7C" />
+//           </TouchableOpacity>
+//         </View>
+
+//         <View style={styles.detailsRow}>
+//           <View style={styles.detailItem}>
+//             <MaterialCommunityIcons name="gender-male-female" size={16} color="#7D7D7D" />
+//             <Text style={styles.detailText}>{pet.gender}</Text>
+//           </View>
+//           {pet.breed && (
+//             <View style={styles.detailItem}>
+//               <FontAwesome5 name="dna" size={14} color="#7D7D7D" />
+//               <Text style={styles.detailText}>{pet.breed}</Text>
 //             </View>
+//           )}
+//         </View>
 
-//             <View style={styles.cardContent}>
-//                 <View style={styles.cardHeader}>
-//                     <Text style={styles.petName} numberOfLines={1}>{pet.name}</Text>
-//                     <View style={styles.typeBadge}>
-//                         <Text style={styles.typeText}>{pet.species}</Text>
-//                     </View>
-//                     <TouchableOpacity onPress={(e) => {
-//                         e.stopPropagation();
-//                         onEdit();
-//                     }}>
-//                         <MaterialIcons name="edit" size={20} color="#4E8D7C" />
-//                     </TouchableOpacity>
-//                 </View>
-
-//                 <View style={styles.detailsRow}>
-//                     <View style={styles.detailItem}>
-//                         <MaterialCommunityIcons name="gender-male-female" size={16} color="#7D7D7D" />
-//                         <Text style={styles.detailText}>{pet.gender}</Text>
-//                     </View>
-//                     {pet.breed && (
-//                         <View style={styles.detailItem}>
-//                             <FontAwesome5 name="dna" size={14} color="#7D7D7D" />
-//                             <Text style={styles.detailText}>{pet.breed}</Text>
-//                         </View>
-//                     )}
-//                 </View>
-
-//                 {pet.dob && (
-//                     <View style={styles.detailsRow}>
-//                         <View style={styles.detailItem}>
-//                             <MaterialIcons name="cake" size={16} color="#7D7D7D" />
-//                             <Text style={styles.detailText}>
-//                                 {new Date(pet.dob).toLocaleDateString()}
-//                             </Text>
-//                         </View>
-//                     </View>
-//                 )}
-
-//                 <View style={styles.statsContainer}>
-//                     {pet.weight && <StatItem value={`${pet.weight} kg`} label="Weight" />}
-//                     {pet.height && <StatItem value={`${pet.height} cm`} label="Height" />}
-//                     {pet.age && <StatItem value={pet.age} label="Age" />}
-//                 </View>
+//         {pet.dob && (
+//           <View style={styles.detailsRow}>
+//             <View style={styles.detailItem}>
+//               <MaterialIcons name="cake" size={16} color="#7D7D7D" />
+//               <Text style={styles.detailText}>
+//                 {new Date(pet.dob).toLocaleDateString()}
+//               </Text>
 //             </View>
-//         </TouchableOpacity>
-//     );
+//           </View>
+//         )}
+
+//         <View style={styles.statsContainer}>
+//           {pet.weight && <StatItem value={`${pet.weight} kg`} label="Weight" />}
+//           {pet.height && <StatItem value={`${pet.height} cm`} label="Height" />}
+//           {pet.age && <StatItem value={pet.age} label="Age" />}
+//         </View>
+//       </View>
+//     </TouchableOpacity>
+//   );
 // };
 
 // const StatItem = ({ value, label }) => (
-//     <View style={styles.statItem}>
-//         <Text style={styles.statValue}>{value}</Text>
-//         <Text style={styles.statLabel}>{label}</Text>
-//     </View>
+//   <View style={styles.statItem}>
+//     <Text style={styles.statValue}>{value}</Text>
+//     <Text style={styles.statLabel}>{label}</Text>
+//   </View>
 // );
 
 // const PetListScreen = () => {
-//     const dispatch = useDispatch();
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState(null);
-//     const [refreshing, setRefreshing] = useState(false);
-//     const [selectedPet, setSelectedPet] = useState(null);
-//     const [modalVisible, setModalVisible] = useState(false);
-//     const [editModalVisible, setEditModalVisible] = useState(false);
-//     const [isUploading, setIsUploading] = useState(false);
-//     const [formData, setFormData] = useState({
-//         name: '',
-//         species: '',
-//         breed: '',
-//         gender: '',
-//         dob: '',
-//         color: '',
-//         weight: '',
-//         height: '',
-//         bloodGroup: '',
-//         allergies: '',
-//         chronicDiseases: '',
-//         currentMedications: '',
-//         pastMedications: '',
-//         vaccinations: '',
-//         surgeries: '',
-//         injuries: '',
-//         distinctiveFeatures: '',
-//         notes: '',
-//         location: '',
-//         lastVetVisit: '',
-//         nextVetVisit: '',
-//         petPhoto: null
+//   const dispatch = useDispatch();
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [refreshing, setRefreshing] = useState(false);
+//   const [selectedPet, setSelectedPet] = useState(null);
+//   const [modalVisible, setModalVisible] = useState(false);
+
+//   const pets = useSelector(state => state.auth?.userPets?.data || []);
+
+//   useEffect(() => {
+//     fetchPets();
+//     return () => dispatch(clearUserPets());
+//   }, [dispatch]);
+
+//   const fetchPets = async () => {
+//     try {
+//       setLoading(true);
+//       const result = await dispatch(getPetsByUserId()).unwrap();
+//       if (result.error) throw new Error(result.payload || 'Failed to load pets');
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleRefresh = async () => {
+//     try {
+//       setRefreshing(true);
+//       await dispatch(getPetsByUserId());
+//     } catch (err) {
+//       setError(err.message);
+//     } finally {
+//       setRefreshing(false);
+//     }
+//   };
+
+//   const handlePetPress = (pet) => {
+//     setSelectedPet(pet);
+//     setModalVisible(true);
+//   };
+
+//   const handleEditPress = (pet) => {
+//     router.push({
+//       pathname: 'pages/EditPetScreen',
+//       params: { petId: pet._id }
 //     });
+//   };
 
-//     const pets = useSelector(state => state.auth?.userPets?.data || []);
+//   const Header = () => (
+//     <View style={styles.header}>
+//       <TouchableOpacity onPress={() => router.push('/(vetician_tabs)/(tabs)')} style={styles.menuButton}>
+//         <ChevronLeft size={24} color="#1a1a1a" />
+//       </TouchableOpacity>
+//       <View>
+//         <Text style={styles.headerTitle}>My Pets</Text>
+//         <Text style={styles.headerSubtitle}>Your registered companions</Text>
+//       </View>
+//     </View>
+//   );
 
-//     useEffect(() => {
-//         fetchPets();
-//         return () => dispatch(clearUserPets());
-//     }, [dispatch]);
+//   const LoadingView = () => (
+//     <View style={styles.loadingContainer}>
+//       <ActivityIndicator size="large" color="#4E8D7C" />
+//       <Text style={styles.loadingText}>Loading your pets...</Text>
+//     </View>
+//   );
 
-//     const fetchPets = async () => {
-//         try {
-//             setLoading(true);
-//             const result = await dispatch(getPetsByUserId()).unwrap();
-//             if (result.error) throw new Error(result.payload || 'Failed to load pets');
-//         } catch (err) {
-//             setError(err.message);
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
+//   const ErrorView = ({ error, onRetry }) => (
+//     <View style={styles.errorContainer}>
+//       <MaterialIcons name="error-outline" size={50} color="#E74C3C" />
+//       <Text style={styles.errorText}>{error}</Text>
+//       <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+//         <Text style={styles.retryButtonText}>Try Again</Text>
+//       </TouchableOpacity>
+//     </View>
+//   );
 
-//     const handleRefresh = async () => {
-//         try {
-//             setRefreshing(true);
-//             await dispatch(getPetsByUserId());
-//         } catch (err) {
-//             setError(err.message);
-//         } finally {
-//             setRefreshing(false);
-//         }
-//     };
+//   const EmptyState = ({ onAddPet }) => (
+//     <View style={styles.emptyContainer}>
+//       <FontAwesome5 name="paw" size={60} color="#E0E0E0" />
+//       <Text style={styles.emptyTitle}>No Pets Found</Text>
+//       <Text style={styles.emptyText}>You haven't registered any pets yet</Text>
+//       <TouchableOpacity style={styles.addPetButton} onPress={onAddPet}>
+//         <Text style={styles.addPetButtonText}>Register a Pet</Text>
+//       </TouchableOpacity>
+//     </View>
+//   );
 
-//     const handlePetPress = (pet) => {
-//         setSelectedPet(pet);
-//         setModalVisible(true);
-//     };
+//   if (loading && !refreshing) return <LoadingView />;
+//   if (error) return <ErrorView error={error} onRetry={() => {
+//     setError(null);
+//     dispatch(getPetsByUserId());
+//   }} />;
 
-//     const handleEditPress = (pet) => {
-//         setSelectedPet(pet);
-//         setFormData({
-//             name: pet.name || '',
-//             species: pet.species || '',
-//             breed: pet.breed || '',
-//             gender: pet.gender || '',
-//             dob: pet.dob || '',
-//             color: pet.color || '',
-//             weight: pet.weight ? String(pet.weight) : '',
-//             height: pet.height ? String(pet.height) : '',
-//             bloodGroup: pet.bloodGroup || '',
-//             allergies: pet.allergies || '',
-//             chronicDiseases: pet.chronicDiseases || '',
-//             currentMedications: pet.currentMedications || '',
-//             pastMedications: pet.pastMedications || '',
-//             vaccinations: pet.vaccinations || '',
-//             surgeries: pet.surgeries || '',
-//             injuries: pet.injuries || '',
-//             distinctiveFeatures: pet.distinctiveFeatures || '',
-//             notes: pet.notes || '',
-//             location: pet.location || '',
-//             lastVetVisit: pet.lastVetVisit || '',
-//             nextVetVisit: pet.nextVetVisit || '',
-//             petPhoto: pet.petPhoto || null
-//         });
-//         setEditModalVisible(true);
-//     };
+//   return (
+//     <View style={styles.container}>
+//       <Header />
 
-//     const uploadToCloudinary = async (file) => {
-//         const fileExtension = file.uri.split('.').pop().toLowerCase();
-//         const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension);
-//         const type = isImage ? 'image' : 'raw';
+//       <View style={styles.resultsContainer}>
+//         <Text style={styles.resultsText}>
+//           {pets.length} {pets.length === 1 ? 'Pet' : 'Pets'} Registered
+//         </Text>
+//         <TouchableOpacity onPress={handleRefresh}>
+//           <MaterialIcons name="refresh" size={24} color="#4E8D7C" />
+//         </TouchableOpacity>
+//       </View>
 
-//         try {
-//             const fileInfo = await FileSystem.getInfoAsync(file.uri, { size: true });
-//             if (!fileInfo.exists) throw new Error(`File not found: ${file.uri}`);
-//             if (fileInfo.size === 0) throw new Error('Empty file');
-
-//             const formData = new FormData();
-//             formData.append('file', {
-//                 uri: file.uri,
-//                 name: file.name || `pet_upload_${Date.now()}.${fileExtension}`,
-//                 type: isImage ? `image/${fileExtension === 'jpg' ? 'jpeg' : fileExtension}`
-//                     : file.type || 'application/octet-stream'
-//             });
-//             formData.append('upload_preset', 'vetician');
-//             formData.append('cloud_name', 'dqwzfs4ox');
-
-//             const response = await fetch(
-//                 `https://api.cloudinary.com/v1_1/dqwzfs4ox/${type}/upload`,
-//                 {
-//                     method: 'POST',
-//                     body: formData,
-//                     headers: {
-//                         'Content-Type': 'multipart/form-data',
-//                     },
-//                 }
-//             );
-
-//             if (!response.ok) {
-//                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-//             }
-
-//             const data = await response.json();
-//             return data;
-//         } catch (error) {
-//             console.error('[Cloudinary] UPLOAD FAILED:', error);
-//             throw error;
-//         }
-//     };
-
-//     const pickImage = async () => {
-//         try {
-//             const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-//             if (status !== 'granted') {
-//                 Alert.alert('Permission required', 'We need camera roll permissions to upload images');
-//                 return;
-//             }
-
-//             let result = await ImagePicker.launchImageLibraryAsync({
-//                 mediaTypes: ImagePicker.MediaTypeOptions.Images,
-//                 allowsEditing: true,
-//                 aspect: [1, 1],
-//                 quality: 0.8,
-//             });
-
-//             if (!result.canceled) {
-//                 const selectedAsset = result.assets[0];
-//                 setFormData(prev => ({
-//                     ...prev,
-//                     petPhoto: {
-//                         uri: selectedAsset.uri,
-//                         name: selectedAsset.fileName || `image_${Date.now()}.jpg`,
-//                         type: 'image/jpeg'
-//                     }
-//                 }));
-//             }
-//         } catch (error) {
-//             console.error('Image picker error:', error);
-//             Alert.alert('Error', 'Failed to pick image. Please try again.');
-//         }
-//     };
-
-//     const handleInputChange = (field, value) => {
-//         setFormData(prev => ({ ...prev, [field]: value }));
-//     };
-
-//     const handleSubmit = async () => {
-//         try {
-//             setIsUploading(true);
-//             let imageUrl = selectedPet?.petPhoto || null;
-
-//             if (formData.petPhoto && formData.petPhoto.uri !== selectedPet?.petPhoto) {
-//                 const cloudinaryResponse = await uploadToCloudinary(formData.petPhoto);
-//                 imageUrl = cloudinaryResponse.secure_url;
-//             }
-
-//             const updatedPetData = {
-//                 ...formData,
-//                 petPhoto: imageUrl,
-//                 weight: formData.weight ? parseFloat(formData.weight) : null,
-//                 height: formData.height ? parseFloat(formData.height) : null
-//             };
-
-//             const result = await dispatch(updatePet({
-//                 petId: selectedPet._id,
-//                 petData: updatedPetData
-//             })).unwrap();
-
-//             if (result.success) {
-//                 Alert.alert(
-//                     'Success',
-//                     'Pet updated successfully!',
-//                     [{ text: 'OK', onPress: () => {
-//                         setEditModalVisible(false);
-//                         dispatch(getPetsByUserId());
-//                     }}]
-//                 );
-//             }
-//         } catch (error) {
-//             console.error('Submission error:', error);
-//             Alert.alert('Error', error.message || 'An error occurred while updating pet');
-//         } finally {
-//             setIsUploading(false);
-//         }
-//     };
-
-//     if (loading && !refreshing) return <LoadingView />;
-//     if (error) return <ErrorView error={error} onRetry={() => {
-//         setError(null);
-//         dispatch(getPetsByUserId());
-//     }} />;
-
-//     return (
-//         <View style={styles.container}>
-//             <Header />
-
-//             <View style={styles.resultsContainer}>
-//                 <Text style={styles.resultsText}>
-//                     {pets.length} {pets.length === 1 ? 'Pet' : 'Pets'} Registered
-//                 </Text>
-//                 <TouchableOpacity onPress={handleRefresh}>
-//                     <MaterialIcons name="refresh" size={24} color="#4E8D7C" />
-//                 </TouchableOpacity>
-//             </View>
-
-//             {pets.length === 0 ? (
-//                 <EmptyState onAddPet={() => router.navigate('/pages/PetDetail')} />
-//             ) : (
-//                 <>
-//                     <FlatList
-//                         data={pets}
-//                         renderItem={({ item }) => (
-//                             <PetCard 
-//                                 pet={item} 
-//                                 onPress={() => handlePetPress(item)} 
-//                                 onEdit={() => handleEditPress(item)}
-//                             />
-//                         )}
-//                         keyExtractor={(item) => item._id || String(Math.random())}
-//                         contentContainerStyle={styles.listContainer}
-//                         showsVerticalScrollIndicator={false}
-//                         refreshing={refreshing}
-//                         onRefresh={handleRefresh}
-//                     />
-//                     <TouchableOpacity
-//                         style={styles.addButtonFloating}
-//                         onPress={() => router.navigate('/pages/PetDetail')}
-//                     >
-//                         <MaterialIcons name="add" size={28} color="white" />
-//                     </TouchableOpacity>
-                    
-//                     <PetDetailsModal
-//                         pet={selectedPet}
-//                         visible={modalVisible}
-//                         onClose={() => setModalVisible(false)}
-//                     />
-
-//                     {/* Edit Pet Modal */}
-//                     <Modal
-//                         visible={editModalVisible}
-//                         animationType="fade"
-//                         transparent={true}
-//                         onRequestClose={() => setEditModalVisible(false)}
-//                     >
-//                         <TouchableWithoutFeedback onPress={() => setEditModalVisible(false)}>
-//                             <View style={styles.modalOverlay} />
-//                         </TouchableWithoutFeedback>
-                        
-//                         <View style={styles.modalContainer}>
-//                             <View style={styles.modalHeader}>
-//                                 <Text style={styles.modalTitle}>Edit Pet Details</Text>
-//                                 <TouchableOpacity 
-//                                     style={styles.closeButton}
-//                                     onPress={() => setEditModalVisible(false)}
-//                                 >
-//                                     <MaterialIcons name="close" size={24} color="#666" />
-//                                 </TouchableOpacity>
-//                             </View>
-
-//                             <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-//                                 <View style={styles.section}>
-//                                     <Text style={styles.sectionTitle}>Profile Picture</Text>
-//                                     <TouchableOpacity style={styles.imageUploadContainer} onPress={pickImage}>
-//                                         {formData.petPhoto ? (
-//                                             <Image 
-//                                                 source={{ 
-//                                                     uri: formData.petPhoto.uri || formData.petPhoto 
-//                                                 }} 
-//                                                 style={styles.modalProfileImage} 
-//                                             />
-//                                         ) : (
-//                                             <View style={styles.modalProfileImagePlaceholder}>
-//                                                 <FontAwesome5 
-//                                                     name={PET_TYPES[formData.species] || PET_TYPES.default} 
-//                                                     size={40} 
-//                                                     color="#666" 
-//                                                 />
-//                                             </View>
-//                                         )}
-//                                     </TouchableOpacity>
-//                                 </View>
-
-//                                 <View style={styles.section}>
-//                                     <Text style={styles.sectionTitle}>Basic Information</Text>
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Pet Name"
-//                                             value={formData.name}
-//                                             onChangeText={(value) => handleInputChange('name', value)}
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Species (Dog, Cat, etc.)"
-//                                             value={formData.species}
-//                                             onChangeText={(value) => handleInputChange('species', value)}
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Breed"
-//                                             value={formData.breed}
-//                                             onChangeText={(value) => handleInputChange('breed', value)}
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Gender"
-//                                             value={formData.gender}
-//                                             onChangeText={(value) => handleInputChange('gender', value)}
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Date of Birth (YYYY-MM-DD)"
-//                                             value={formData.dob}
-//                                             onChangeText={(value) => handleInputChange('dob', value)}
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Color"
-//                                             value={formData.color}
-//                                             onChangeText={(value) => handleInputChange('color', value)}
-//                                         />
-//                                     </View>
-//                                 </View>
-
-//                                 <View style={styles.section}>
-//                                     <Text style={styles.sectionTitle}>Physical Attributes</Text>
-//                                     <View style={styles.row}>
-//                                         <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
-//                                             <TextInput
-//                                                 style={styles.input}
-//                                                 placeholder="Weight (kg)"
-//                                                 value={formData.weight}
-//                                                 onChangeText={(value) => handleInputChange('weight', value)}
-//                                                 keyboardType="numeric"
-//                                             />
-//                                         </View>
-//                                         <View style={[styles.inputContainer, { flex: 1 }]}>
-//                                             <TextInput
-//                                                 style={styles.input}
-//                                                 placeholder="Height (cm)"
-//                                                 value={formData.height}
-//                                                 onChangeText={(value) => handleInputChange('height', value)}
-//                                                 keyboardType="numeric"
-//                                             />
-//                                         </View>
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Blood Group"
-//                                             value={formData.bloodGroup}
-//                                             onChangeText={(value) => handleInputChange('bloodGroup', value)}
-//                                         />
-//                                     </View>
-//                                 </View>
-
-//                                 <View style={styles.section}>
-//                                     <Text style={styles.sectionTitle}>Health Information</Text>
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Allergies"
-//                                             value={formData.allergies}
-//                                             onChangeText={(value) => handleInputChange('allergies', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Chronic Diseases"
-//                                             value={formData.chronicDiseases}
-//                                             onChangeText={(value) => handleInputChange('chronicDiseases', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Current Medications"
-//                                             value={formData.currentMedications}
-//                                             onChangeText={(value) => handleInputChange('currentMedications', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Past Medications"
-//                                             value={formData.pastMedications}
-//                                             onChangeText={(value) => handleInputChange('pastMedications', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Vaccinations"
-//                                             value={formData.vaccinations}
-//                                             onChangeText={(value) => handleInputChange('vaccinations', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Surgeries"
-//                                             value={formData.surgeries}
-//                                             onChangeText={(value) => handleInputChange('surgeries', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Injuries"
-//                                             value={formData.injuries}
-//                                             onChangeText={(value) => handleInputChange('injuries', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-//                                 </View>
-
-//                                 <View style={styles.section}>
-//                                     <Text style={styles.sectionTitle}>Additional Information</Text>
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Distinctive Features"
-//                                             value={formData.distinctiveFeatures}
-//                                             onChangeText={(value) => handleInputChange('distinctiveFeatures', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Notes"
-//                                             value={formData.notes}
-//                                             onChangeText={(value) => handleInputChange('notes', value)}
-//                                             multiline
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.inputContainer}>
-//                                         <TextInput
-//                                             style={styles.input}
-//                                             placeholder="Location"
-//                                             value={formData.location}
-//                                             onChangeText={(value) => handleInputChange('location', value)}
-//                                         />
-//                                     </View>
-
-//                                     <View style={styles.row}>
-//                                         <View style={[styles.inputContainer, { flex: 1, marginRight: 10 }]}>
-//                                             <TextInput
-//                                                 style={styles.input}
-//                                                 placeholder="Last Vet Visit"
-//                                                 value={formData.lastVetVisit}
-//                                                 onChangeText={(value) => handleInputChange('lastVetVisit', value)}
-//                                             />
-//                                         </View>
-//                                         <View style={[styles.inputContainer, { flex: 1 }]}>
-//                                             <TextInput
-//                                                 style={styles.input}
-//                                                 placeholder="Next Vet Visit"
-//                                                 value={formData.nextVetVisit}
-//                                                 onChangeText={(value) => handleInputChange('nextVetVisit', value)}
-//                                             />
-//                                         </View>
-//                                     </View>
-//                                 </View>
-
-//                                 <TouchableOpacity
-//                                     style={[styles.submitButton, isUploading && styles.submitButtonDisabled]}
-//                                     onPress={handleSubmit}
-//                                     disabled={isUploading}
-//                                 >
-//                                     <Text style={styles.submitButtonText}>
-//                                         {isUploading ? 'Saving...' : 'Save Changes'}
-//                                     </Text>
-//                                 </TouchableOpacity>
-//                             </ScrollView>
-//                         </View>
-//                     </Modal>
-//                 </>
+//       {pets.length === 0 ? (
+//         <EmptyState onAddPet={() => router.navigate('/pages/PetDetail')} />
+//       ) : (
+//         <>
+//           <FlatList
+//             data={pets}
+//             renderItem={({ item }) => (
+//               <PetCard 
+//                 pet={item} 
+//                 onPress={() => handlePetPress(item)} 
+//                 onEdit={() => handleEditPress(item)}
+//               />
 //             )}
-//         </View>
-//     );
+//             keyExtractor={(item) => item._id || String(Math.random())}
+//             contentContainerStyle={styles.listContainer}
+//             showsVerticalScrollIndicator={false}
+//             refreshing={refreshing}
+//             onRefresh={handleRefresh}
+//           />
+//           <TouchableOpacity
+//             style={styles.addButtonFloating}
+//             onPress={() => router.navigate('/pages/PetDetail')}
+//           >
+//             <MaterialIcons name="add" size={28} color="white" />
+//           </TouchableOpacity>
+          
+//           <PetDetailsModal
+//             pet={selectedPet}
+//             visible={modalVisible}
+//             onClose={() => setModalVisible(false)}
+//           />
+//         </>
+//       )}
+//     </View>
+//   );
 // };
 
-// const Header = () => (
-//     <View style={styles.header}>
-//         <TouchableOpacity onPress={() => router.back()} style={styles.menuButton}>
-//             <ChevronLeft size={24} color="#1a1a1a" />
-//         </TouchableOpacity>
-//         <View>
-//             <Text style={styles.headerTitle}>My Pets</Text>
-//             <Text style={styles.headerSubtitle}>Your registered companions</Text>
-//         </View>
-//     </View>
-// );
-
-// const LoadingView = () => (
-//     <View style={styles.loadingContainer}>
-//         <ActivityIndicator size="large" color="#4E8D7C" />
-//         <Text style={styles.loadingText}>Loading your pets...</Text>
-//     </View>
-// );
-
-// const ErrorView = ({ error, onRetry }) => (
-//     <View style={styles.errorContainer}>
-//         <MaterialIcons name="error-outline" size={50} color="#E74C3C" />
-//         <Text style={styles.errorText}>{error}</Text>
-//         <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
-//             <Text style={styles.retryButtonText}>Try Again</Text>
-//         </TouchableOpacity>
-//     </View>
-// );
-
-// const EmptyState = ({ onAddPet }) => (
-//     <View style={styles.emptyContainer}>
-//         <FontAwesome5 name="paw" size={60} color="#E0E0E0" />
-//         <Text style={styles.emptyTitle}>No Pets Found</Text>
-//         <Text style={styles.emptyText}>You haven't registered any pets yet</Text>
-//         <TouchableOpacity style={styles.addPetButton} onPress={onAddPet}>
-//             <Text style={styles.addPetButtonText}>Register a Pet</Text>
-//         </TouchableOpacity>
-//     </View>
-// );
-
 // const styles = StyleSheet.create({
-//     container: {
-//         flex: 1,
-//         backgroundColor: '#F8F9FA',
-//         paddingHorizontal: 16,
-//         paddingTop: 50
-//     },
-//     header: {
-//         marginBottom: 20,
-//         paddingHorizontal: 8,
-//         display: "flex",
-//         flexDirection: 'row'
-//     },
-//     headerTitle: {
-//         fontSize: 28,
-//         fontWeight: '700',
-//         color: '#2C3E50',
-//         marginBottom: 4
-//     },
-//     headerSubtitle: {
-//         fontSize: 16,
-//         color: '#7D7D7D'
-//     },
-//     loadingContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         backgroundColor: '#F8F9FA'
-//     },
-//     loadingText: {
-//         marginTop: 16,
-//         color: '#4E8D7C',
-//         fontSize: 16
-//     },
-//     errorContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         padding: 20,
-//         backgroundColor: '#F8F9FA'
-//     },
-//     errorText: {
-//         fontSize: 16,
-//         color: '#E74C3C',
-//         marginVertical: 20,
-//         textAlign: 'center'
-//     },
-//     retryButton: {
-//         backgroundColor: '#4E8D7C',
-//         padding: 12,
-//         borderRadius: 8,
-//         marginTop: 10
-//     },
-//     retryButtonText: {
-//         color: 'white',
-//         fontWeight: '600'
-//     },
-//     resultsContainer: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         alignItems: 'center',
-//         marginBottom: 16,
-//         paddingHorizontal: 8
-//     },
-//     resultsText: {
-//         color: '#2C3E50',
-//         fontSize: 16,
-//         fontWeight: '600'
-//     },
-//     emptyContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         padding: 40
-//     },
-//     emptyTitle: {
-//         fontSize: 22,
-//         fontWeight: '600',
-//         color: '#2C3E50',
-//         marginTop: 16
-//     },
-//     emptyText: {
-//         fontSize: 16,
-//         color: '#7D7D7D',
-//         textAlign: 'center',
-//         marginTop: 8,
-//         marginBottom: 24
-//     },
-//     addPetButton: {
-//         paddingHorizontal: 24,
-//         paddingVertical: 12,
-//         backgroundColor: '#4E8D7C',
-//         borderRadius: 8
-//     },
-//     addPetButtonText: {
-//         color: 'white',
-//         fontWeight: '600'
-//     },
-//     listContainer: {
-//         paddingBottom: 30
-//     },
-//     card: {
-//         backgroundColor: 'white',
-//         borderRadius: 16,
-//         padding: 16,
-//         marginBottom: 16,
-//         flexDirection: 'row',
-//         shadowColor: '#000',
-//         shadowOffset: { width: 0, height: 2 },
-//         shadowOpacity: 0.08,
-//         shadowRadius: 8,
-//         elevation: 3
-//     },
-//     cardImageContainer: {
-//         shadowColor: '#000',
-//         shadowOffset: { width: 0, height: 2 },
-//         shadowOpacity: 0.1,
-//         shadowRadius: 4,
-//         elevation: 2
-//     },
-//     profileImage: {
-//         width: 90,
-//         height: 90,
-//         borderRadius: 12,
-//         marginRight: 16
-//     },
-//     profilePlaceholder: {
-//         width: 90,
-//         height: 90,
-//         borderRadius: 12,
-//         backgroundColor: '#F0F7F4',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         marginRight: 16
-//     },
-//     cardContent: {
-//         flex: 1
-//     },
-//     cardHeader: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         alignItems: 'center',
-//         marginBottom: 8
-//     },
-//     petName: {
-//         fontSize: 18,
-//         fontWeight: '700',
-//         color: '#2C3E50',
-//         flex: 1,
-//         marginRight: 10
-//     },
-//     typeBadge: {
-//         paddingHorizontal: 10,
-//         paddingVertical: 4,
-//         borderRadius: 12,
-//         backgroundColor: '#E8F5E9',
-//         borderColor: '#4E8D7C',
-//         borderWidth: 1,
-//         marginRight: 10
-//     },
-//     typeText: {
-//         fontSize: 12,
-//         color: '#4E8D7C',
-//         fontWeight: '600'
-//     },
-//     detailsRow: {
-//         flexDirection: 'row',
-//         marginBottom: 8
-//     },
-//     detailItem: {
-//         flexDirection: 'row',
-//         alignItems: 'center',
-//         marginRight: 16
-//     },
-//     detailText: {
-//         fontSize: 14,
-//         color: '#555',
-//         marginLeft: 4
-//     },
-//     statsContainer: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         marginTop: 8,
-//         paddingTop: 8,
-//         borderTopWidth: 1,
-//         borderTopColor: '#EEE'
-//     },
-//     statItem: {
-//         alignItems: 'center'
-//     },
-//     statValue: {
-//         fontSize: 16,
-//         fontWeight: '600',
-//         color: '#2C3E50'
-//     },
-//     statLabel: {
-//         fontSize: 12,
-//         color: '#7D7D7D',
-//         marginTop: 2
-//     },
-//     menuButton: {
-//         marginRight: 20,
-//         justifyContent: 'center',
-//         padding: 5
-//     },
-//     addButtonFloating: {
-//         position: 'absolute',
-//         bottom: 30,
-//         right: 30,
-//         width: 60,
-//         height: 60,
-//         borderRadius: 30,
-//         backgroundColor: '#4E8D7C',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         shadowColor: '#000',
-//         shadowOffset: { width: 0, height: 2 },
-//         shadowOpacity: 0.3,
-//         shadowRadius: 4,
-//         elevation: 5
-//     },
-//     // Modal styles
-//     modalOverlay: {
-//         position: 'absolute',
-//         top: 0,
-//         bottom: 0,
-//         left: 0,
-//         right: 0,
-//         backgroundColor: 'rgba(0,0,0,0.5)',
-//     },
-//     modalContainer: {
-//         flex: 1,
-//         justifyContent: 'center',
-//         margin: 20,
-//         marginTop: 50,
-//         marginBottom: 50,
-//         backgroundColor: 'white',
-//         borderRadius: 20,
-//         padding: 20,
-//         shadowColor: '#000',
-//         shadowOffset: {
-//             width: 0,
-//             height: 2,
-//         },
-//         shadowOpacity: 0.25,
-//         shadowRadius: 4,
-//         elevation: 5,
-//     },
-//     modalHeader: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//         alignItems: 'center',
-//         marginBottom: 20,
-//     },
-//     modalTitle: {
-//         fontSize: 22,
-//         fontWeight: 'bold',
-//         color: '#333',
-//     },
-//     closeButton: {
-//         padding: 8,
-//     },
-//     modalContent: {
-//         flexGrow: 1,
-//     },
-//     imageUploadContainer: {
-//         alignItems: 'center',
-//         marginBottom: 20,
-//     },
-//     modalProfileImage: {
-//         width: 120,
-//         height: 120,
-//         borderRadius: 60,
-//     },
-//     modalProfileImagePlaceholder: {
-//         width: 120,
-//         height: 120,
-//         borderRadius: 60,
-//         backgroundColor: '#f0f0f0',
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//     },
-//     section: {
-//         marginBottom: 20,
-//     },
-//     sectionTitle: {
-//         fontSize: 16,
-//         fontWeight: '600',
-//         color: '#4E8D7C',
-//         marginBottom: 10,
-//     },
-//     inputContainer: {
-//         marginBottom: 15,
-//     },
-//     input: {
-//         borderWidth: 1,
-//         borderColor: '#ddd',
-//         borderRadius: 8,
-//         padding: 12,
-//         fontSize: 16,
-//         color: '#333',
-//     },
-//     row: {
-//         flexDirection: 'row',
-//         justifyContent: 'space-between',
-//     },
-//     submitButton: {
-//         backgroundColor: '#4E8D7C',
-//         borderRadius: 8,
-//         height: 50,
-//         justifyContent: 'center',
-//         alignItems: 'center',
-//         marginTop: 20,
-//         marginBottom: 10,
-//     },
-//     submitButtonDisabled: {
-//         backgroundColor: '#A0C4FF',
-//     },
-//     submitButtonText: {
-//         color: 'white',
-//         fontSize: 16,
-//         fontWeight: 'bold',
-//     },
+//   container: {
+//     flex: 1,
+//     backgroundColor: '#F8F9FA',
+//     paddingHorizontal: 16,
+//     paddingTop: 50
+//   },
+//   header: {
+//     marginBottom: 20,
+//     paddingHorizontal: 8,
+//     display: "flex",
+//     flexDirection: 'row'
+//   },
+//   headerTitle: {
+//     fontSize: 28,
+//     fontWeight: '700',
+//     color: '#2C3E50',
+//     marginBottom: 4
+//   },
+//   headerSubtitle: {
+//     fontSize: 16,
+//     color: '#7D7D7D'
+//   },
+//   loadingContainer: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     backgroundColor: '#F8F9FA'
+//   },
+//   loadingText: {
+//     marginTop: 16,
+//     color: '#4E8D7C',
+//     fontSize: 16
+//   },
+//   errorContainer: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     padding: 20,
+//     backgroundColor: '#F8F9FA'
+//   },
+//   errorText: {
+//     fontSize: 16,
+//     color: '#E74C3C',
+//     marginVertical: 20,
+//     textAlign: 'center'
+//   },
+//   retryButton: {
+//     backgroundColor: '#4E8D7C',
+//     padding: 12,
+//     borderRadius: 8,
+//     marginTop: 10
+//   },
+//   retryButtonText: {
+//     color: 'white',
+//     fontWeight: '600'
+//   },
+//   resultsContainer: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     marginBottom: 16,
+//     paddingHorizontal: 8
+//   },
+//   resultsText: {
+//     color: '#2C3E50',
+//     fontSize: 16,
+//     fontWeight: '600'
+//   },
+//   emptyContainer: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     padding: 40
+//   },
+//   emptyTitle: {
+//     fontSize: 22,
+//     fontWeight: '600',
+//     color: '#2C3E50',
+//     marginTop: 16
+//   },
+//   emptyText: {
+//     fontSize: 16,
+//     color: '#7D7D7D',
+//     textAlign: 'center',
+//     marginTop: 8,
+//     marginBottom: 24
+//   },
+//   addPetButton: {
+//     paddingHorizontal: 24,
+//     paddingVertical: 12,
+//     backgroundColor: '#4E8D7C',
+//     borderRadius: 8
+//   },
+//   addPetButtonText: {
+//     color: 'white',
+//     fontWeight: '600'
+//   },
+//   listContainer: {
+//     paddingBottom: 30
+//   },
+//   card: {
+//     backgroundColor: 'white',
+//     borderRadius: 16,
+//     padding: 16,
+//     marginBottom: 16,
+//     flexDirection: 'row',
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.08,
+//     shadowRadius: 8,
+//     elevation: 3
+//   },
+//   cardImageContainer: {
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.1,
+//     shadowRadius: 4,
+//     elevation: 2
+//   },
+//   profileImage: {
+//     width: 90,
+//     height: 90,
+//     borderRadius: 12,
+//     marginRight: 16
+//   },
+//   profilePlaceholder: {
+//     width: 90,
+//     height: 90,
+//     borderRadius: 12,
+//     backgroundColor: '#F0F7F4',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     marginRight: 16
+//   },
+//   cardContent: {
+//     flex: 1
+//   },
+//   cardHeader: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     alignItems: 'center',
+//     marginBottom: 8
+//   },
+//   petName: {
+//     fontSize: 18,
+//     fontWeight: '700',
+//     color: '#2C3E50',
+//     flex: 1,
+//     marginRight: 10
+//   },
+//   typeBadge: {
+//     paddingHorizontal: 10,
+//     paddingVertical: 4,
+//     borderRadius: 12,
+//     backgroundColor: '#E8F5E9',
+//     borderColor: '#4E8D7C',
+//     borderWidth: 1,
+//     marginRight: 10
+//   },
+//   typeText: {
+//     fontSize: 12,
+//     color: '#4E8D7C',
+//     fontWeight: '600'
+//   },
+//   detailsRow: {
+//     flexDirection: 'row',
+//     marginBottom: 8
+//   },
+//   detailItem: {
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     marginRight: 16
+//   },
+//   detailText: {
+//     fontSize: 14,
+//     color: '#555',
+//     marginLeft: 4
+//   },
+//   statsContainer: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     marginTop: 8,
+//     paddingTop: 8,
+//     borderTopWidth: 1,
+//     borderTopColor: '#EEE'
+//   },
+//   statItem: {
+//     alignItems: 'center'
+//   },
+//   statValue: {
+//     fontSize: 16,
+//     fontWeight: '600',
+//     color: '#2C3E50'
+//   },
+//   statLabel: {
+//     fontSize: 12,
+//     color: '#7D7D7D',
+//     marginTop: 2
+//   },
+//   menuButton: {
+//     marginRight: 20,
+//     justifyContent: 'center',
+//     padding: 5
+//   },
+//   addButtonFloating: {
+//     position: 'absolute',
+//     bottom: 30,
+//     right: 30,
+//     width: 60,
+//     height: 60,
+//     borderRadius: 30,
+//     backgroundColor: '#4E8D7C',
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     shadowColor: '#000',
+//     shadowOffset: { width: 0, height: 2 },
+//     shadowOpacity: 0.3,
+//     shadowRadius: 4,
+//     elevation: 5
+//   }
 // });
 
 // export default PetListScreen;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -1523,7 +481,8 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
-  Image
+  Image,
+  Animated
 } from 'react-native';
 import { MaterialIcons, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -1531,6 +490,7 @@ import { getPetsByUserId, clearUserPets } from '../../../store/slices/authSlice'
 import { router } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import PetDetailsModal from '../../../components/petparent/home/PetDetailModal';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 const PET_TYPES = {
@@ -1539,80 +499,138 @@ const PET_TYPES = {
   default: 'paw'
 };
 
-const PetCard = ({ pet, onPress, onEdit }) => {
+const PetCard = ({ pet, onPress, onEdit, index }) => {
+  const [scaleAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      delay: index * 100,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 40
+    }).start();
+  }, []);
+
   if (!pet) return null;
 
   const getPetIcon = () => {
     return PET_TYPES[pet.species] || PET_TYPES.default;
   };
 
+  const getGradientColors = () => {
+    const gradients = {
+      Dog: ['#FF6B6B', '#FF8E53'],
+      Cat: ['#4ECDC4', '#44A08D'],
+      default: ['#A8E6CF', '#7EC8A3']
+    };
+    return gradients[pet.species] || gradients.default;
+  };
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View style={styles.cardImageContainer}>
-        {pet?.petPhoto ? (
-          <Image source={{ uri: pet.petPhoto }} style={styles.profileImage} />
-        ) : (
-          <View style={styles.profilePlaceholder}>
-            <FontAwesome5
-              name={getPetIcon()}
-              size={32}
-              color="#4E8D7C"
-            />
+    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+      <TouchableOpacity 
+        style={styles.card} 
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <LinearGradient
+          colors={['rgba(78, 141, 124, 0.03)', 'rgba(78, 141, 124, 0.08)']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.cardGradient}
+        >
+          <View style={styles.cardImageContainer}>
+            {pet?.petPhoto ? (
+              <Image source={{ uri: pet.petPhoto }} style={styles.profileImage} />
+            ) : (
+              <LinearGradient
+                colors={getGradientColors()}
+                style={styles.profilePlaceholder}
+              >
+                <FontAwesome5
+                  name={getPetIcon()}
+                  size={36}
+                  color="white"
+                />
+              </LinearGradient>
+            )}
+            <View style={styles.onlineIndicator} />
           </View>
-        )}
-      </View>
 
-      <View style={styles.cardContent}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.petName} numberOfLines={1}>{pet.name}</Text>
-          <View style={styles.typeBadge}>
-            <Text style={styles.typeText}>{pet.species}</Text>
-          </View>
-          <TouchableOpacity onPress={(e) => {
-            e.stopPropagation();
-            onEdit();
-          }}>
-            <MaterialIcons name="edit" size={20} color="#4E8D7C" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.detailsRow}>
-          <View style={styles.detailItem}>
-            <MaterialCommunityIcons name="gender-male-female" size={16} color="#7D7D7D" />
-            <Text style={styles.detailText}>{pet.gender}</Text>
-          </View>
-          {pet.breed && (
-            <View style={styles.detailItem}>
-              <FontAwesome5 name="dna" size={14} color="#7D7D7D" />
-              <Text style={styles.detailText}>{pet.breed}</Text>
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <View style={styles.petNameContainer}>
+                <Text style={styles.petName} numberOfLines={1}>{pet.name}</Text>
+                <View style={styles.typeBadge}>
+                  <FontAwesome5 
+                    name={getPetIcon()} 
+                    size={10} 
+                    color="#4E8D7C" 
+                    style={styles.badgeIcon}
+                  />
+                  <Text style={styles.typeText}>{pet.species}</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                onPress={(e) => {
+                  e.stopPropagation();
+                  onEdit();
+                }}
+                style={styles.editButton}
+              >
+                <MaterialIcons name="edit" size={18} color="#4E8D7C" />
+              </TouchableOpacity>
             </View>
-          )}
-        </View>
 
-        {pet.dob && (
-          <View style={styles.detailsRow}>
-            <View style={styles.detailItem}>
-              <MaterialIcons name="cake" size={16} color="#7D7D7D" />
-              <Text style={styles.detailText}>
-                {new Date(pet.dob).toLocaleDateString()}
-              </Text>
+            <View style={styles.detailsRow}>
+              <View style={styles.detailItem}>
+                <View style={styles.iconWrapper}>
+                  <MaterialCommunityIcons name="gender-male-female" size={14} color="#4E8D7C" />
+                </View>
+                <Text style={styles.detailText}>{pet.gender}</Text>
+              </View>
+              {pet.breed && (
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <FontAwesome5 name="dna" size={12} color="#4E8D7C" />
+                  </View>
+                  <Text style={styles.detailText} numberOfLines={1}>{pet.breed}</Text>
+                </View>
+              )}
+            </View>
+
+            {pet.dob && (
+              <View style={styles.detailsRow}>
+                <View style={styles.detailItem}>
+                  <View style={styles.iconWrapper}>
+                    <MaterialIcons name="cake" size={14} color="#4E8D7C" />
+                  </View>
+                  <Text style={styles.detailText}>
+                    {new Date(pet.dob).toLocaleDateString()}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            <View style={styles.statsContainer}>
+              {pet.weight && <StatItem value={`${pet.weight}`} unit="kg" label="Weight" />}
+              {pet.height && <StatItem value={`${pet.height}`} unit="cm" label="Height" />}
+              {pet.age && <StatItem value={pet.age} unit="" label="Age" />}
             </View>
           </View>
-        )}
-
-        <View style={styles.statsContainer}>
-          {pet.weight && <StatItem value={`${pet.weight} kg`} label="Weight" />}
-          {pet.height && <StatItem value={`${pet.height} cm`} label="Height" />}
-          {pet.age && <StatItem value={pet.age} label="Age" />}
-        </View>
-      </View>
-    </TouchableOpacity>
+        </LinearGradient>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
-const StatItem = ({ value, label }) => (
+const StatItem = ({ value, unit, label }) => (
   <View style={styles.statItem}>
-    <Text style={styles.statValue}>{value}</Text>
+    <View style={styles.statValueContainer}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statUnit}>{unit}</Text>
+    </View>
     <Text style={styles.statLabel}>{label}</Text>
   </View>
 );
@@ -1624,11 +642,17 @@ const PetListScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [fadeAnim] = useState(new Animated.Value(0));
 
   const pets = useSelector(state => state.auth?.userPets?.data || []);
 
   useEffect(() => {
     fetchPets();
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true
+    }).start();
     return () => dispatch(clearUserPets());
   }, [dispatch]);
 
@@ -1669,10 +693,15 @@ const PetListScreen = () => {
 
   const Header = () => (
     <View style={styles.header}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.menuButton}>
-        <ChevronLeft size={24} color="#1a1a1a" />
+      <TouchableOpacity 
+        onPress={() => router.push('/(vetician_tabs)/(tabs)')} 
+        style={styles.menuButton}
+      >
+        <View style={styles.backButtonCircle}>
+          <ChevronLeft size={22} color="#2C3E50" />
+        </View>
       </TouchableOpacity>
-      <View>
+      <View style={styles.headerTextContainer}>
         <Text style={styles.headerTitle}>My Pets</Text>
         <Text style={styles.headerSubtitle}>Your registered companions</Text>
       </View>
@@ -1688,7 +717,10 @@ const PetListScreen = () => {
 
   const ErrorView = ({ error, onRetry }) => (
     <View style={styles.errorContainer}>
-      <MaterialIcons name="error-outline" size={50} color="#E74C3C" />
+      <View style={styles.errorIconCircle}>
+        <MaterialIcons name="error-outline" size={40} color="#E74C3C" />
+      </View>
+      <Text style={styles.errorTitle}>Oops!</Text>
       <Text style={styles.errorText}>{error}</Text>
       <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
         <Text style={styles.retryButtonText}>Try Again</Text>
@@ -1698,10 +730,16 @@ const PetListScreen = () => {
 
   const EmptyState = ({ onAddPet }) => (
     <View style={styles.emptyContainer}>
-      <FontAwesome5 name="paw" size={60} color="#E0E0E0" />
+      <LinearGradient
+        colors={['#F0F7F4', '#E8F5E9']}
+        style={styles.emptyIconCircle}
+      >
+        <FontAwesome5 name="paw" size={50} color="#4E8D7C" />
+      </LinearGradient>
       <Text style={styles.emptyTitle}>No Pets Found</Text>
-      <Text style={styles.emptyText}>You haven't registered any pets yet</Text>
+      <Text style={styles.emptyText}>Start building your pet family by{'\n'}registering your first companion</Text>
       <TouchableOpacity style={styles.addPetButton} onPress={onAddPet}>
+        <MaterialIcons name="add" size={20} color="white" style={styles.addIcon} />
         <Text style={styles.addPetButtonText}>Register a Pet</Text>
       </TouchableOpacity>
     </View>
@@ -1715,50 +753,67 @@ const PetListScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Header />
+      <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
+        <Header />
 
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>
-          {pets.length} {pets.length === 1 ? 'Pet' : 'Pets'} Registered
-        </Text>
-        <TouchableOpacity onPress={handleRefresh}>
-          <MaterialIcons name="refresh" size={24} color="#4E8D7C" />
-        </TouchableOpacity>
-      </View>
-
-      {pets.length === 0 ? (
-        <EmptyState onAddPet={() => router.navigate('/pages/PetDetail')} />
-      ) : (
-        <>
-          <FlatList
-            data={pets}
-            renderItem={({ item }) => (
-              <PetCard 
-                pet={item} 
-                onPress={() => handlePetPress(item)} 
-                onEdit={() => handleEditPress(item)}
-              />
-            )}
-            keyExtractor={(item) => item._id || String(Math.random())}
-            contentContainerStyle={styles.listContainer}
-            showsVerticalScrollIndicator={false}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-          <TouchableOpacity
-            style={styles.addButtonFloating}
-            onPress={() => router.navigate('/pages/PetDetail')}
+        <View style={styles.resultsContainer}>
+          <View style={styles.resultsInfo}>
+            <View style={styles.countBadge}>
+              <Text style={styles.countNumber}>{pets.length}</Text>
+            </View>
+            <Text style={styles.resultsText}>
+              {pets.length === 1 ? 'Pet' : 'Pets'} Registered
+            </Text>
+          </View>
+          <TouchableOpacity 
+            onPress={handleRefresh}
+            style={styles.refreshButton}
           >
-            <MaterialIcons name="add" size={28} color="white" />
+            <MaterialIcons name="refresh" size={22} color="#4E8D7C" />
           </TouchableOpacity>
-          
-          <PetDetailsModal
-            pet={selectedPet}
-            visible={modalVisible}
-            onClose={() => setModalVisible(false)}
-          />
-        </>
-      )}
+        </View>
+
+        {pets.length === 0 ? (
+          <EmptyState onAddPet={() => router.navigate('/pages/PetDetail')} />
+        ) : (
+          <>
+            <FlatList
+              data={pets}
+              renderItem={({ item, index }) => (
+                <PetCard 
+                  pet={item} 
+                  index={index}
+                  onPress={() => handlePetPress(item)} 
+                  onEdit={() => handleEditPress(item)}
+                />
+              )}
+              keyExtractor={(item) => item._id || String(Math.random())}
+              contentContainerStyle={styles.listContainer}
+              showsVerticalScrollIndicator={false}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+            />
+            <TouchableOpacity
+              style={styles.addButtonFloating}
+              onPress={() => router.navigate('/pages/PetDetail')}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#5FA893', '#4E8D7C']}
+                style={styles.fabGradient}
+              >
+                <MaterialIcons name="add" size={28} color="white" />
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <PetDetailsModal
+              pet={selectedPet}
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+            />
+          </>
+        )}
+      </Animated.View>
     </View>
   );
 };
@@ -1771,20 +826,41 @@ const styles = StyleSheet.create({
     paddingTop: 50
   },
   header: {
-    marginBottom: 20,
-    paddingHorizontal: 8,
-    display: "flex",
-    flexDirection: 'row'
+    marginBottom: 24,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  menuButton: {
+    marginRight: 12,
+    justifyContent: 'center'
+  },
+  backButtonCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2
+  },
+  headerTextContainer: {
+    flex: 1
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '700',
     color: '#2C3E50',
-    marginBottom: 4
+    marginBottom: 2
   },
   headerSubtitle: {
-    fontSize: 16,
-    color: '#7D7D7D'
+    fontSize: 14,
+    color: '#95A5A6',
+    fontWeight: '500'
   },
   loadingContainer: {
     flex: 1,
@@ -1795,7 +871,8 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     color: '#4E8D7C',
-    fontSize: 16
+    fontSize: 16,
+    fontWeight: '500'
   },
   errorContainer: {
     flex: 1,
@@ -1804,33 +881,86 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: '#F8F9FA'
   },
+  errorIconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FADBD8',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginBottom: 8
+  },
   errorText: {
-    fontSize: 16,
-    color: '#E74C3C',
-    marginVertical: 20,
-    textAlign: 'center'
+    fontSize: 15,
+    color: '#7D7D7D',
+    marginBottom: 24,
+    textAlign: 'center',
+    lineHeight: 22
   },
   retryButton: {
     backgroundColor: '#4E8D7C',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 10
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+    shadowColor: '#4E8D7C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4
   },
   retryButtonText: {
     color: 'white',
-    fontWeight: '600'
+    fontWeight: '600',
+    fontSize: 16
   },
   resultsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingHorizontal: 8
+    marginBottom: 20,
+    paddingHorizontal: 4
+  },
+  resultsInfo: {
+    flexDirection: 'row',
+    alignItems: 'center'
+  },
+  countBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#4E8D7C',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10
+  },
+  countNumber: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 16
   },
   resultsText: {
     color: '#2C3E50',
     fontSize: 16,
     fontWeight: '600'
+  },
+  refreshButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2
   },
   emptyContainer: {
     flex: 1,
@@ -1838,151 +968,228 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 40
   },
-  emptyTitle: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginTop: 16
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#7D7D7D',
-    textAlign: 'center',
-    marginTop: 8,
+  emptyIconCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 24
   },
+  emptyTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginBottom: 8
+  },
+  emptyText: {
+    fontSize: 15,
+    color: '#95A5A6',
+    textAlign: 'center',
+    marginBottom: 32,
+    lineHeight: 22
+  },
   addPetButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
     backgroundColor: '#4E8D7C',
-    borderRadius: 8
+    borderRadius: 12,
+    shadowColor: '#4E8D7C',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4
+  },
+  addIcon: {
+    marginRight: 6
   },
   addPetButtonText: {
     color: 'white',
-    fontWeight: '600'
+    fontWeight: '600',
+    fontSize: 16
   },
   listContainer: {
-    paddingBottom: 30
+    paddingBottom: 100
   },
   card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 16,
     marginBottom: 16,
-    flexDirection: 'row',
+    borderRadius: 20,
+    overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5
+  },
+  cardGradient: {
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 20
   },
   cardImageContainer: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2
+    position: 'relative'
   },
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
-    marginRight: 16
+    width: 100,
+    height: 100,
+    borderRadius: 16,
+    marginRight: 16,
+    borderWidth: 3,
+    borderColor: 'white'
   },
   profilePlaceholder: {
-    width: 90,
-    height: 90,
-    borderRadius: 12,
-    backgroundColor: '#F0F7F4',
+    width: 100,
+    height: 100,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16
+    marginRight: 16,
+    borderWidth: 3,
+    borderColor: 'white'
+  },
+  onlineIndicator: {
+    position: 'absolute',
+    bottom: 18,
+    right: 20,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#2ECC71',
+    borderWidth: 3,
+    borderColor: 'white'
   },
   cardContent: {
-    flex: 1
+    flex: 1,
+    justifyContent: 'space-between'
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 8
   },
+  petNameContainer: {
+    flex: 1,
+    marginRight: 8
+  },
   petName: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#2C3E50',
-    flex: 1,
-    marginRight: 10
+    marginBottom: 6
   },
   typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: '#E8F5E9',
     borderColor: '#4E8D7C',
     borderWidth: 1,
-    marginRight: 10
+    alignSelf: 'flex-start'
+  },
+  badgeIcon: {
+    marginRight: 4
   },
   typeText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#4E8D7C',
-    fontWeight: '600'
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  editButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F0F7F4',
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   detailsRow: {
     flexDirection: 'row',
-    marginBottom: 8
+    marginBottom: 6,
+    flexWrap: 'wrap'
   },
   detailItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 16
+    marginRight: 16,
+    marginBottom: 4
+  },
+  iconWrapper: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#F0F7F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 6
   },
   detailText: {
-    fontSize: 14,
-    color: '#555',
-    marginLeft: 4
+    fontSize: 13,
+    color: '#5D6D7E',
+    fontWeight: '500',
+    maxWidth: 100
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 8,
+    justifyContent: 'space-around',
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#EEE'
+    borderTopColor: '#ECF0F1'
   },
   statItem: {
-    alignItems: 'center'
+    alignItems: 'center',
+    flex: 1
+  },
+  statValueContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline'
   },
   statValue: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#4E8D7C'
+  },
+  statUnit: {
+    fontSize: 11,
+    color: '#95A5A6',
     fontWeight: '600',
-    color: '#2C3E50'
+    marginLeft: 2
   },
   statLabel: {
-    fontSize: 12,
-    color: '#7D7D7D',
-    marginTop: 2
-  },
-  menuButton: {
-    marginRight: 20,
-    justifyContent: 'center',
-    padding: 5
+    fontSize: 11,
+    color: '#95A5A6',
+    marginTop: 2,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
   },
   addButtonFloating: {
     position: 'absolute',
     bottom: 30,
     right: 30,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#4E8D7C',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    shadowColor: '#4E8D7C',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8
+  },
+  fabGradient: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5
+    alignItems: 'center'
   }
 });
 

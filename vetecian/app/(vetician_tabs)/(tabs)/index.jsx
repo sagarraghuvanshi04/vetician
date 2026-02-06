@@ -5,6 +5,13 @@ import PetList from '../pages/PetList'
 // import ParentDetail from '../onboarding/parent_detail'
 import ClinicListScreen from '../pages/ClinicListScreen';
 import HealthTipsScreen from '../pages/HealthTipsScreen'
+import VideoCall from '../pages/VideoCall';
+import Doorstep from '../pages/DoorStep';
+import PetWatching from '../pages/PetWatching';
+import BookHostel from '../pages/Hostel';
+import DayPlaySchool from '../pages/School';
+import PetTraining from '../pages/PetTraning';
+import Grooming from '../pages/Groming';
 
 const Drawer = createDrawerNavigator();
 
@@ -24,25 +31,64 @@ export default function AppDrawer() {
         options={{ headerShown: false, title: 'Dassboard' }}
       />
       <Drawer.Screen
-        name="Pets"
-        component={PetList}
-        options={{ headerShown: false, title: 'Pets' }}
+        name="VideoCall"
+        component={VideoCall}
+        options={{ headerShown: false, title: 'Video Consultation' }}
       />
-      {/* <Drawer.Screen
-        name="ParentDetail"
-        component={ParentDetail}
-        options={{ headerShown: false, title: 'Parent Details' }}
-      /> */}
+      <Drawer.Screen
+        name="Doorstep"
+        component={Doorstep}
+        options={{ headerShown: false, title: 'Doorstep Service' }}
+      />
+      <Drawer.Screen
+        name="PetWatching"
+        component={PetWatching}
+        options={{ headerShown: false, title: 'Pet Watching' }}
+      />
+      <Drawer.Screen
+        name="BookHostel"
+        component={BookHostel}
+        options={{ headerShown: false, title: 'Book a Hostel' }}
+      />
+      <Drawer.Screen
+        name="DayPlaySchool"
+        component={DayPlaySchool}
+        options={{ headerShown: false, title: 'Day/Play School' }}
+      />
+      <Drawer.Screen
+        name="PetTraining"
+        component={PetTraining}
+        options={{ headerShown: false, title: 'Pet Training' }}
+      />
+      <Drawer.Screen
+        name="Grooming"
+        component={Grooming}
+        options={{ headerShown: false, title: 'Pet Grooming' }}
+      />
       <Drawer.Screen
         name="ClinicList"
         component={ClinicListScreen}
         options={{ headerShown: false, title: 'Find Clinics' }}
       />
       <Drawer.Screen
+        name="Pets"
+        component={PetList}
+        options={{ headerShown: false, title: 'Pets' }}
+      />
+      
+      
+      {/* <Drawer.Screen
+        name="ParentDetail"
+        component={ParentDetail}
+        options={{ headerShown: false, title: 'Parent Details' }}
+      /> */}
+      
+      <Drawer.Screen
         name="HealthTips"
         component={HealthTipsScreen}
         options={{ headerShown: false, title: 'Health Tips' }}
       />
+      
     </Drawer.Navigator>
   );
 }
