@@ -20,12 +20,11 @@ export default function PhoneScreen() {
     setLoading(true);
     
     try {
-      const BASE_URL = 'https://usually-imposturous-sharri.ngrok-free.dev/api';
+      const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
       const response = await fetch(`${BASE_URL}/auth/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify({ phoneNumber: formattedPhone }),
       });
