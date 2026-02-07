@@ -20,7 +20,8 @@ export default function PhoneScreen() {
     setLoading(true);
     
     try {
-      const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+      const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://vetician-backend.onrender.com/api';
+      console.log('API URL:', BASE_URL);
       const response = await fetch(`${BASE_URL}/auth/send-otp`, {
         method: 'POST',
         headers: {
