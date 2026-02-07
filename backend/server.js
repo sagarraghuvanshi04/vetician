@@ -27,6 +27,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const paravetRoutes = require('./routes/paravetRoutes');
 const parentRoutes = require('./routes/parentRoutes');
+const { errorHandler } = require('./middleware/errorHandler');
 
 /* =========================
    MongoDB Connection
@@ -67,6 +68,11 @@ app.get('/api/test', (req, res) => {
 app.post('/api/test', (req, res) => {
   res.json({ message: 'POST request successful!', body: req.body });
 });
+
+/* =========================
+   Error Handler (LAST)
+========================= */
+app.use(errorHandler);
 
 /* =========================
    Start Server

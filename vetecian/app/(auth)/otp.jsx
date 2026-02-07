@@ -212,28 +212,33 @@ import OTPInput from '../../components/auth/OTPInput';
 
 export default function OTPScreen() {
   const router = useRouter();
-  const { phoneNumber, verificationId } = useLocalSearchParams();
+  const { phoneNumber, email, verificationId, otp: testOtp, otpMethod } = useLocalSearchParams();
   const [loading, setLoading] = useState(false);
 
   const handleOTPSubmit = async (otp) => {
     setLoading(true);
     
     try {
-      const BASE_URL = 'https://usually-imposturous-sharri.ngrok-free.dev/api';
+      const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://vetician-backend.onrender.com/api';
+      console.log('🔵 Verifying OTP:', otp);
+      console.log('🔵 Phone:', phoneNumber);
+      console.log('🔵 Verification ID:', verificationId);
+      
       const response = await fetch(`${BASE_URL}/auth/verify-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
         },
         body: JSON.stringify({ 
-          phoneNumber, 
+          phoneNumber: phoneNumber || undefined,
+          email: email || undefined,
           otp, 
           verificationId 
         }),
       });
       
       const data = await response.json();
+      console.log('🔵 Verify response:', data);
       
       if (response.ok) {
         Alert.alert('Success', 'OTP verified successfully!', [
@@ -257,8 +262,15 @@ export default function OTPScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Enter OTP</Text>
       <Text style={styles.subtitle}>
-        We've sent a code to {phoneNumber}
+        We've sent a code to {otpMethod === 'email' ? email : phoneNumber}
       </Text>
+      
+      {testOtp && (
+        <View style={styles.otpDisplay}>
+          <Text style={styles.otpLabel}>Test OTP: </Text>
+          <Text style={styles.otpValue}>{testOtp}</Text>
+        </View>
+      )}
       
       <OTPInput onComplete={handleOTPSubmit} />
       
@@ -297,5 +309,22 @@ const styles = StyleSheet.create({
   resendText: {
     color: '#4A90E2',
     fontSize: 16,
+  },
+  otpDisplay: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  otpLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  otpValue: {
+    fontSize: 16,
+    color: '#4A90E2',
+    fontWeight: 'bold',
   },
 });

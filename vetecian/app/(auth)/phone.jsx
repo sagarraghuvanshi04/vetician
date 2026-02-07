@@ -8,11 +8,17 @@ let globalConfirmation = null;
 export default function PhoneScreen() {
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [otpMethod, setOtpMethod] = useState('phone'); // 'phone' or 'email'
   const [loading, setLoading] = useState(false);
 
   const handleSendOTP = async () => {
-    if (!phoneNumber.trim()) {
-      Alert.alert('Error', 'Please enter a phone number');
+    if (otpMethod === 'phone' && !phoneNumber.trim()) {
+      window.alert('Please enter a phone number');
+      return;
+    }
+    if (otpMethod === 'email' && !email.trim()) {
+      window.alert('Please enter an email');
       return;
     }
 
@@ -21,55 +27,105 @@ export default function PhoneScreen() {
     
     try {
       const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://vetician-backend.onrender.com/api';
-      console.log('API URL:', BASE_URL);
+      console.log('🔵 API URL:', BASE_URL);
+      console.log('🔵 OTP Method:', otpMethod);
+      console.log('🔵 Sending OTP to:', otpMethod === 'phone' ? formattedPhone : email);
+      
+      const requestBody = otpMethod === 'phone' 
+        ? { phoneNumber: formattedPhone, type: 'phone' }
+        : { email: email.trim(), type: 'email' };
+      
       const response = await fetch(`${BASE_URL}/auth/send-otp`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ phoneNumber: formattedPhone }),
+        body: JSON.stringify(requestBody),
       });
       
+      console.log('🔵 Response status:', response.status);
+      console.log('🔵 Response ok:', response.ok);
+      
       const data = await response.json();
+      console.log('🔵 Response data:', data);
+      console.log('🔵 Is 404?', response.status === 404);
+      console.log('🔵 Alert should show:', !response.ok && response.status === 404);
       
       if (response.ok) {
-        Alert.alert('OTP Sent', `OTP sent to ${formattedPhone}`, [
-          {
-            text: 'OK',
-            onPress: () => {
-              router.push({
-                pathname: '/(auth)/otp',
-                params: { 
-                  phoneNumber: formattedPhone, 
-                  verificationId: data.verificationId 
-                }
-              });
-            }
+        setLoading(false);
+        // Direct navigation without alert
+        router.push({
+          pathname: '/(auth)/otp',
+          params: { 
+            phoneNumber: otpMethod === 'phone' ? formattedPhone : '',
+            email: otpMethod === 'email' ? email.trim() : '',
+            verificationId: data.verificationId,
+            otp: data.otp,
+            otpMethod: otpMethod
           }
-        ]);
+        });
       } else {
-        Alert.alert('Error', data.message || 'Failed to send OTP');
+        setLoading(false);
+        // Check if user not found
+        if (response.status === 404) {
+          const message = 'No account exists with this ' + (otpMethod === 'phone' ? 'phone number' : 'email') + '. Please sign up first.';
+          
+          if (window.confirm(message + '\n\nWould you like to sign up now?')) {
+            router.push('/(auth)/signup');
+          }
+        } else {
+          window.alert(data.message || 'Failed to send OTP');
+        }
       }
     } catch (error) {
+      setLoading(false);
       console.log('Error sending OTP:', error);
-      Alert.alert('Error', 'Network error. Please try again.');
+      window.alert('Network error. Please try again.');
     }
-    
-    setLoading(false);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Enter Phone Number</Text>
+      <Text style={styles.title}>Login with OTP</Text>
       
-      <TextInput
-        style={styles.input}
-        placeholder="Enter 10-digit mobile number"
-        value={phoneNumber}
-        onChangeText={setPhoneNumber}
-        keyboardType="phone-pad"
-        maxLength={10}
-      />
+      <View style={styles.methodSelector}>
+        <TouchableOpacity 
+          style={[styles.methodButton, otpMethod === 'phone' && styles.methodButtonActive]}
+          onPress={() => setOtpMethod('phone')}
+        >
+          <Text style={[styles.methodText, otpMethod === 'phone' && styles.methodTextActive]}>
+            Phone
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.methodButton, otpMethod === 'email' && styles.methodButtonActive]}
+          onPress={() => setOtpMethod('email')}
+        >
+          <Text style={[styles.methodText, otpMethod === 'email' && styles.methodTextActive]}>
+            Email
+          </Text>
+        </TouchableOpacity>
+      </View>
+      
+      {otpMethod === 'phone' ? (
+        <TextInput
+          style={styles.input}
+          placeholder="Enter 10-digit mobile number"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          keyboardType="phone-pad"
+          maxLength={10}
+        />
+      ) : (
+        <TextInput
+          style={styles.input}
+          placeholder="Enter your email"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+      )}
       
       <TouchableOpacity 
         style={[styles.button, loading && styles.buttonDisabled]} 
@@ -119,6 +175,31 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  methodSelector: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  methodButton: {
+    flex: 1,
+    padding: 12,
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  methodButtonActive: {
+    backgroundColor: '#4A90E2',
+  },
+  methodText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  methodTextActive: {
+    color: '#fff',
     fontWeight: 'bold',
   },
 });

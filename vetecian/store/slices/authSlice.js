@@ -39,7 +39,6 @@ const getCommonHeaders = async (includeAuth = false) => {
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true', // ✅ Sabse important line for Ngrok CORS
   };
   
   if (includeAuth) {
@@ -170,14 +169,14 @@ export const signInUser = createAsyncThunk(
 
 export const signUpUser = createAsyncThunk(
   'auth/signUp',
-  async ({ name, email, password, role = 'vetician' }, { rejectWithValue }) => {
+  async ({ name, email, password, phone, role = 'vetician' }, { rejectWithValue }) => {
     try {
       const BASE_URL = getApiBaseUrl();
       const headers = await getCommonHeaders(false); // No auth needed for signup
       const res = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, phone, role }),
       });
       if (!res.ok) {
         const text = await res.text();

@@ -20,6 +20,7 @@ export default function SignUp() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -52,6 +53,7 @@ export default function SignUp() {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Full name is required';
     if (!formData.email.trim() || !validateEmail(formData.email)) newErrors.email = 'Valid email is required';
+    if (!formData.phone.trim() || formData.phone.length < 10) newErrors.phone = 'Valid phone number required';
     if (!formData.password.trim() || formData.password.length < 6) newErrors.password = 'Password must be 6+ chars';
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
@@ -65,8 +67,9 @@ export default function SignUp() {
       const dispatchParams = {
         name: formData.name.trim(),
         email: formData.email.trim(),
+        phone: formData.phone.trim(),
         password: formData.password,
-        role: loginType, // ✅ Backend usually expects 'role'
+        role: loginType,
       };
 
       // ✅ FIX: Response ko 'result' variable mein store karein
@@ -79,40 +82,13 @@ export default function SignUp() {
       if (result) {
         console.log('🎉 SIGNUP COMPONENT - Signup successful');
         
-        Alert.alert(
-          'Account Created',
-          'Your account has been created successfully!',
-          [
-            {
-              text: 'OK',
-              onPress: () => {
-                // Route to appropriate onboarding based on login type
-                switch (loginType) {
-                  case 'veterinarian':
-                    router.replace('/(doc_tabs)/onboarding/onboarding_conf');
-                    break;
-                  case 'pet_resort':
-                    router.replace('/(pet_resort_tabs)/(tabs)');
-                    break;
-                  case 'peravet':
-                    router.replace('/(peravet_tabs)/(tabs)');
-                    break;
-                  default: // vetician / pet parent
-                    router.replace('/(vetician_tabs)/onboarding/onboarding_conf');
-                }
-              },
-            },
-          ],
-        );
+        window.alert('Account created successfully!');
+        router.replace('/(auth)/signin');
       }
     } catch (error) {
       console.log('❌ SIGNUP COMPONENT - Caught error:', error);
       
-      // Error handling for existing users or server issues
-      Alert.alert(
-        'Sign Up Failed',
-        typeof error === 'string' ? error : (error.message || 'An error occurred')
-      );
+      window.alert(typeof error === 'string' ? error : (error.message || 'An error occurred'));
     }
   };
 
@@ -172,6 +148,24 @@ export default function SignUp() {
               </View>
               {errors.email && (
                 <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputWrapper}>
+                <Text style={styles.phonePrefix}>+91</Text>
+                <TextInput
+                  style={[styles.input, errors.phone && styles.inputError]}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#aaa"
+                  value={formData.phone}
+                  onChangeText={(value) => handleInputChange('phone', value)}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+              </View>
+              {errors.phone && (
+                <Text style={styles.errorText}>{errors.phone}</Text>
               )}
             </View>
 
@@ -519,5 +513,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#4A90E2',
     fontWeight: '600',
+  },
+  phonePrefix: {
+    fontSize: 16,
+    color: '#333',
+    marginRight: 8,
+    fontWeight: '500',
   },
 });

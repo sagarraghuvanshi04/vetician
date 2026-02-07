@@ -32,7 +32,7 @@ const register = catchAsync(async (req, res, next) => {
   console.log('🔍 REGISTER API - Request started');
   console.log('📝 REGISTER API - Request body:', req.body);
   
-  const { name, email, password, role = 'vetician' } = req.body;
+  const { name, email, password, phone, role = 'vetician' } = req.body;
   
   console.log('📋 REGISTER API - Extracted data:', {
     name: name ? name.trim() : name,
@@ -70,12 +70,14 @@ const register = catchAsync(async (req, res, next) => {
     name: name.trim(),
     email: email.toLowerCase().trim(),
     password,
+    phone: phone || null,
     role
   });
   
   console.log('👤 REGISTER API - Created user object:', {
     name: user.name,
     email: user.email,
+    phone: user.phone,
     role: user.role,
     hasPassword: !!user.password
   });
@@ -1515,12 +1517,35 @@ const generateOTP = () => {
 
 // Send OTP using Fast2SMS (for Indian numbers)
 const sendOTP = catchAsync(async (req, res, next) => {
-  const { phoneNumber } = req.body;
+  const { phoneNumber, email, type = 'phone' } = req.body;
   
-  console.log('📞 Received OTP request for:', phoneNumber);
+  console.log('📞 Received OTP request:', { phoneNumber, email, type });
   
-  if (!phoneNumber) {
+  // Validate input based on type
+  if (type === 'phone' && !phoneNumber) {
     return next(new AppError('Phone number is required', 400));
+  }
+  if (type === 'email' && !email) {
+    return next(new AppError('Email is required', 400));
+  }
+  
+  // Check if user exists
+  let user;
+  if (type === 'phone') {
+    console.log('🔍 Searching for phone:', phoneNumber);
+    user = await User.findOne({ phone: phoneNumber });
+    console.log('🔍 User found:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('🔍 User phone in DB:', user.phone);
+    }
+    if (!user) {
+      return next(new AppError('No account found with this phone number. Please sign up first.', 404));
+    }
+  } else {
+    user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return next(new AppError('No account found with this email. Please sign up first.', 404));
+    }
   }
   
   const otp = generateOTP();
@@ -1530,63 +1555,62 @@ const sendOTP = catchAsync(async (req, res, next) => {
   
   // Store OTP with 5 minute expiry
   otpStorage.set(verificationId, {
-    phoneNumber,
+    phoneNumber: phoneNumber || null,
+    email: email || null,
     otp,
     expiresAt: Date.now() + 5 * 60 * 1000
   });
   
   try {
-    const axios = require('axios');
-    
-    // Clean phone number (remove +91)
-    const cleanPhone = phoneNumber.replace('+91', '').replace('+', '');
-    console.log('📤 Sending SMS to:', cleanPhone);
-    console.log('🔑 API Key:', process.env.FAST2SMS_API_KEY ? 'Found' : 'Missing');
-    
-    const response = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
-      route: 'v3',
-      sender_id: 'FSTSMS',
-      message: `Your Vetician OTP is ${otp}. Valid for 5 minutes.`,
-      language: 'english',
-      flash: 0,
-      numbers: cleanPhone
-    }, {
-      headers: {
-        'authorization': process.env.FAST2SMS_API_KEY,
-        'Content-Type': 'application/json'
-      }
-    });
-    
-    console.log('✅ Fast2SMS response:', response.data);
+    if (type === 'phone') {
+      const axios = require('axios');
+      const cleanPhone = phoneNumber.replace('+91', '').replace('+', '');
+      
+      const response = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
+        route: 'v3',
+        sender_id: 'FSTSMS',
+        message: `Your Vetician OTP is ${otp}. Valid for 5 minutes.`,
+        language: 'english',
+        flash: 0,
+        numbers: cleanPhone
+      }, {
+        headers: {
+          'authorization': process.env.FAST2SMS_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ SMS sent:', response.data);
+    } else {
+      // Email OTP logic (add nodemailer here)
+      console.log('📧 Email OTP not implemented yet');
+    }
     
     res.status(200).json({
       success: true,
-      message: 'OTP sent successfully',
-      verificationId
+      message: type === 'phone' ? 'OTP sent to phone' : 'OTP sent to email',
+      verificationId,
+      otp: otp // For testing only
     });
   } catch (error) {
-    console.error('❌ SMS Error:', error.message);
-    if (error.response) {
-      console.error('❌ Response data:', error.response.data);
-      console.error('❌ Response status:', error.response.status);
-    }
-    console.log(`📱 OTP for ${phoneNumber}: ${otp}`);
+    console.error('❌ Error:', error.message);
+    console.log(`📱 OTP for testing: ${otp}`);
     
     res.status(200).json({
       success: true,
       message: 'OTP generated (check console for testing)',
       verificationId,
-      otp: otp // For testing
+      otp: otp
     });
   }
 });
 
 // Verify OTP
 const verifyOTP = catchAsync(async (req, res, next) => {
-  const { phoneNumber, otp, verificationId } = req.body;
+  const { phoneNumber, email, otp, verificationId } = req.body;
   
-  if (!phoneNumber || !otp || !verificationId) {
-    return next(new AppError('Phone number, OTP, and verification ID are required', 400));
+  if ((!phoneNumber && !email) || !otp || !verificationId) {
+    return next(new AppError('Phone/Email, OTP, and verification ID are required', 400));
   }
   
   const storedData = otpStorage.get(verificationId);
@@ -1600,8 +1624,12 @@ const verifyOTP = catchAsync(async (req, res, next) => {
     return next(new AppError('OTP has expired', 400));
   }
   
-  if (storedData.phoneNumber !== phoneNumber) {
+  if (phoneNumber && storedData.phoneNumber !== phoneNumber) {
     return next(new AppError('Phone number mismatch', 400));
+  }
+  
+  if (email && storedData.email !== email) {
+    return next(new AppError('Email mismatch', 400));
   }
   
   if (storedData.otp !== otp) {
@@ -1613,7 +1641,8 @@ const verifyOTP = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: 'OTP verified successfully',
-    phoneNumber
+    phoneNumber: phoneNumber || null,
+    email: email || null
   });
 });
 
