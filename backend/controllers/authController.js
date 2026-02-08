@@ -1515,12 +1515,24 @@ const generateOTP = () => {
 
 // Send OTP using Fast2SMS (for Indian numbers)
 const sendOTP = catchAsync(async (req, res, next) => {
-  const { phoneNumber } = req.body;
+  const { phoneNumber, email } = req.body;
   
-  console.log('📞 Received OTP request for:', phoneNumber);
+  console.log('📞 Received OTP request for:', phoneNumber || email);
   
-  if (!phoneNumber) {
-    return next(new AppError('Phone number is required', 400));
+  if (!phoneNumber && !email) {
+    return next(new AppError('Phone number or email is required', 400));
+  }
+  
+  // Check if user exists
+  let user;
+  if (phoneNumber) {
+    user = await User.findOne({ phone: phoneNumber });
+  } else {
+    user = await User.findOne({ email: email.toLowerCase() });
+  }
+  
+  if (!user) {
+    return next(new AppError('User not found. Please sign up first.', 404));
   }
   
   const otp = generateOTP();
@@ -1531,46 +1543,59 @@ const sendOTP = catchAsync(async (req, res, next) => {
   // Store OTP with 5 minute expiry
   otpStorage.set(verificationId, {
     phoneNumber,
+    email,
     otp,
     expiresAt: Date.now() + 5 * 60 * 1000
   });
   
-  try {
-    const axios = require('axios');
-    
-    // Clean phone number (remove +91)
-    const cleanPhone = phoneNumber.replace('+91', '').replace('+', '');
-    console.log('📤 Sending SMS to:', cleanPhone);
-    console.log('🔑 API Key:', process.env.FAST2SMS_API_KEY ? 'Found' : 'Missing');
-    
-    const response = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
-      route: 'v3',
-      sender_id: 'FSTSMS',
-      message: `Your Vetician OTP is ${otp}. Valid for 5 minutes.`,
-      language: 'english',
-      flash: 0,
-      numbers: cleanPhone
-    }, {
-      headers: {
-        'authorization': process.env.FAST2SMS_API_KEY,
-        'Content-Type': 'application/json'
+  if (phoneNumber) {
+    try {
+      const axios = require('axios');
+      
+      // Clean phone number (remove +91)
+      const cleanPhone = phoneNumber.replace('+91', '').replace('+', '');
+      console.log('📤 Sending SMS to:', cleanPhone);
+      console.log('🔑 API Key:', process.env.FAST2SMS_API_KEY ? 'Found' : 'Missing');
+      
+      const response = await axios.post('https://www.fast2sms.com/dev/bulkV2', {
+        route: 'v3',
+        sender_id: 'FSTSMS',
+        message: `Your Vetician OTP is ${otp}. Valid for 5 minutes.`,
+        language: 'english',
+        flash: 0,
+        numbers: cleanPhone
+      }, {
+        headers: {
+          'authorization': process.env.FAST2SMS_API_KEY,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Fast2SMS response:', response.data);
+      
+      res.status(200).json({
+        success: true,
+        message: 'OTP sent successfully',
+        verificationId
+      });
+    } catch (error) {
+      console.error('❌ SMS Error:', error.message);
+      if (error.response) {
+        console.error('❌ Response data:', error.response.data);
+        console.error('❌ Response status:', error.response.status);
       }
-    });
-    
-    console.log('✅ Fast2SMS response:', response.data);
-    
-    res.status(200).json({
-      success: true,
-      message: 'OTP sent successfully',
-      verificationId
-    });
-  } catch (error) {
-    console.error('❌ SMS Error:', error.message);
-    if (error.response) {
-      console.error('❌ Response data:', error.response.data);
-      console.error('❌ Response status:', error.response.status);
+      console.log(`📱 OTP for ${phoneNumber}: ${otp}`);
+      
+      res.status(200).json({
+        success: true,
+        message: 'OTP generated (check console for testing)',
+        verificationId,
+        otp: otp // For testing
+      });
     }
-    console.log(`📱 OTP for ${phoneNumber}: ${otp}`);
+  } else {
+    // Email OTP - just log to console for now
+    console.log(`📧 OTP for ${email}: ${otp}`);
     
     res.status(200).json({
       success: true,
@@ -1583,14 +1608,13 @@ const sendOTP = catchAsync(async (req, res, next) => {
 
 // Verify OTP
 const verifyOTP = catchAsync(async (req, res, next) => {
-  const { phoneNumber, otp, verificationId } = req.body;
+  const { phoneNumber, email, otp, verificationId } = req.body;
   
-  if (!phoneNumber || !otp || !verificationId) {
-    return next(new AppError('Phone number, OTP, and verification ID are required', 400));
+  if ((!phoneNumber && !email) || !otp || !verificationId) {
+    return next(new AppError('Phone/Email, OTP, and verification ID are required', 400));
   }
   
   const storedData = otpStorage.get(verificationId);
-  
   if (!storedData) {
     return next(new AppError('Invalid or expired verification ID', 400));
   }
@@ -1600,8 +1624,12 @@ const verifyOTP = catchAsync(async (req, res, next) => {
     return next(new AppError('OTP has expired', 400));
   }
   
-  if (storedData.phoneNumber !== phoneNumber) {
+  if (phoneNumber && storedData.phoneNumber !== phoneNumber) {
     return next(new AppError('Phone number mismatch', 400));
+  }
+  
+  if (email && storedData.email !== email) {
+    return next(new AppError('Email mismatch', 400));
   }
   
   if (storedData.otp !== otp) {
@@ -1610,10 +1638,31 @@ const verifyOTP = catchAsync(async (req, res, next) => {
   
   otpStorage.delete(verificationId);
   
+  let user;
+  if (phoneNumber) {
+    user = await User.findOne({ phone: phoneNumber });
+  } else {
+    user = await User.findOne({ email: email.toLowerCase() });
+  }
+  
+  if (!user) {
+    return next(new AppError('User not found', 404));
+  }
+  
+  const { accessToken, refreshToken } = generateTokens(user._id);
+  user.refreshTokens.push({ token: refreshToken });
+  await user.save();
+  await user.updateLastLogin();
+  
   res.status(200).json({
     success: true,
     message: 'OTP verified successfully',
-    phoneNumber
+    user: {
+      ...user.getPublicProfile(),
+      role: user.role
+    },
+    token: accessToken,
+    refreshToken
   });
 });
 

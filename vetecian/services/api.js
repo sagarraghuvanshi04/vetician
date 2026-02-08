@@ -1,8 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 // ✅ EXPO SAFE ENV
-const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_URL || 'https://vetician-backend.onrender.com/api';
+const API_BASE_URL = 'http://localhost:3000/api';
 
 console.log('API_BASE_URL:', API_BASE_URL);
 
@@ -11,9 +10,12 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
-  // ✅ Get token from SecureStore
+  // ✅ Get token from SecureStore or localStorage
   async getToken() {
     try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        return localStorage.getItem('token');
+      }
       return await SecureStore.getItemAsync('token');
     } catch {
       return null;
