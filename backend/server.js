@@ -27,6 +27,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/user');
 const paravetRoutes = require('./routes/paravetRoutes');
 const parentRoutes = require('./routes/parentRoutes');
+const doorstepRoutes = require('./routes/doorstepRoutes');
 
 /* =========================
    MongoDB Connection
@@ -51,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/paravet', paravetRoutes);
 app.use('/api/parents', parentRoutes);
+app.use('/api/doorstep', doorstepRoutes);
 
 /* =========================
    Health Check

@@ -34,12 +34,10 @@ export const debugAuthState = createAsyncThunk(
   }
 );
 
-// ✅ Naya Helper: Ye headers har request mein CORS aur Ngrok ko bypass karenge
 const getCommonHeaders = async (includeAuth = false) => {
   const headers = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': 'true', // ✅ Sabse important line for Ngrok CORS
   };
   
   if (includeAuth) {

@@ -1283,7 +1283,7 @@ export default function Home() {
           <QuickActionButton
             icon={Activity}
             label="Records"
-            onPress={() => navigateTo('MedicalRecords')}
+            onPress={() => navigateTo('pages/MedicalRecords')}
             gradient={['#FFA726', '#FFB74D']}
           />
         </View>
@@ -1343,9 +1343,14 @@ export default function Home() {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>My Pets</Text>
-            <TouchableOpacity onPress={() => navigateTo('pages/PetList')}>
-              <Text style={styles.seeAll}>See All</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <TouchableOpacity onPress={() => navigateTo('pages/MyBookings')}>
+                <Text style={styles.seeAll}>My Bookings</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigateTo('pages/PetList')}>
+                <Text style={styles.seeAll}>See All</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           
           

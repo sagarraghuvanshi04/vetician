@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ✅ EXPO SAFE ENV
 const API_BASE_URL =
@@ -11,10 +11,10 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
-  // ✅ Get token from SecureStore
+  // ✅ Get token from AsyncStorage
   async getToken() {
     try {
-      return await SecureStore.getItemAsync('token');
+      return await AsyncStorage.getItem('token');
     } catch {
       return null;
     }
@@ -23,6 +23,7 @@ class ApiService {
   // ✅ Generic request
   async request(endpoint, options = {}) {
     const token = await this.getToken();
+    console.log('🔑 Token for request:', token ? 'Token exists' : 'No token found');
 
     const config = {
       headers: {
@@ -38,6 +39,7 @@ class ApiService {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        console.error('❌ API Response not OK:', response.status, data);
         throw new Error(data.message || 'API request failed');
       }
 
@@ -80,7 +82,7 @@ class ApiService {
   }
 
   logout() {
-    return SecureStore.deleteItemAsync('token');
+    return AsyncStorage.removeItem('token');
   }
 
   /* =========================
@@ -121,6 +123,26 @@ class ApiService {
 
   getPetsByUserId(userId) {
     return this.get(`/parents/pets/${userId}`);
+  }
+
+  /* =========================
+     DOORSTEP SERVICE
+  ========================= */
+
+  createDoorstepBooking(data) {
+    return this.post('/doorstep/bookings', data);
+  }
+
+  getDoorstepBookings() {
+    return this.get('/doorstep/bookings');
+  }
+
+  getDoorstepBooking(id) {
+    return this.get(`/doorstep/bookings/${id}`);
+  }
+
+  cancelDoorstepBooking(id) {
+    return this.patch(`/doorstep/bookings/${id}/cancel`);
   }
 
   /* =========================

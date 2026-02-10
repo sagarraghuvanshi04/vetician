@@ -15,10 +15,15 @@ import { useFocusEffect } from "expo-router";
 import { router } from "expo-router";
 
 const services = [
-  "Vet Consultation",
-  "Vaccination",
-  "Grooming",
   "Video Consultation",
+  "Doorstep Service",
+  "Pet Watching",
+  "Book a Hostel",
+  "Day/Play School",
+  "Pet Training",
+  "Pet Grooming",
+  "Find Clinics",
+  "Health Tips",
 ];
 
 const clinics = [
