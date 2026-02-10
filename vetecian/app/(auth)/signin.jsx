@@ -496,7 +496,7 @@
 // });
 
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -681,7 +681,11 @@ export default function SignIn() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.logoContainer}>
             <PawPrint size={40} color="#4A90E2" style={styles.logo} />
@@ -883,7 +887,8 @@ export default function SignIn() {
             <Text style={styles.comingSoonText}>Pet Resort and Paravet features coming soon!</Text>
           </View>
         </View>
-      </View>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
@@ -893,11 +898,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
     paddingHorizontal: 30,
-    paddingBottom: 40,
+    paddingVertical: 40,
   },
   header: {
     alignItems: 'center',
