@@ -78,7 +78,11 @@ const deleteAccount = catchAsync(async (req, res, next) => {
 const getDashboardStats = catchAsync(async (req, res, next) => {
   
   if (req.user.role !== 'veterinarian') {
-    return next(new AppError('Access denied. Only veterinarians can access this dashboard.', 403));
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Only veterinarians can access this dashboard.',
+      userRole: req.user.role
+    });
   }
 
   

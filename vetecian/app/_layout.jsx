@@ -17,43 +17,44 @@ function LoadingScreen() {
 function AuthGuard({ children }) {
   const router = useRouter();
   const segments = useSegments();
-  const [isReady, setIsReady] = useState(false);
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-      const inAuthGroup = segments[0] === '(auth)';
+    // Wait for router to be ready
+    const timer = setTimeout(() => {
+      setIsNavigationReady(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
 
-      if (!token && !inAuthGroup) {
-        router.replace('/(auth)/signin');
-      } else if (token && inAuthGroup) {
-        const userData = JSON.parse(user || '{}');
-        const role = userData.role || 'vetician';
-        
-        switch(role) {
-          case 'veterinarian':
-            router.replace('/(doc_tabs)');
-            break;
-          case 'pet_resort':
-            router.replace('/(pet_resort_tabs)');
-            break;
-          case 'paravet':
-            router.replace('/(peravet_tabs)/(tabs)');
-            break;
-          default:
-            router.replace('/(vetician_tabs)');
-        }
+  useEffect(() => {
+    if (!isNavigationReady) return;
+
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!token && !inAuthGroup) {
+      router.replace('/(auth)/signin');
+    } else if (token && inAuthGroup) {
+      const userData = JSON.parse(user || '{}');
+      const role = userData.role || 'vetician';
+      
+      switch(role) {
+        case 'veterinarian':
+          router.replace('/(doc_tabs)');
+          break;
+        case 'pet_resort':
+          router.replace('/(pet_resort_tabs)');
+          break;
+        case 'paravet':
+          router.replace('/(peravet_tabs)/(tabs)');
+          break;
+        default:
+          router.replace('/(vetician_tabs)');
       }
-      setIsReady(true);
-    };
-
-    checkAuth();
-  }, [segments]);
-
-  if (!isReady) {
-    return <LoadingScreen />;
-  }
+    }
+  }, [isNavigationReady, segments]);
 
   return children;
 }

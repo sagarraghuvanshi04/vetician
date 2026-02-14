@@ -957,7 +957,7 @@ import {
   Stethoscope,
   Users,
 } from 'lucide-react-native';
-import { DrawerActions, useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../../../services/api';
@@ -968,7 +968,7 @@ const { width } = Dimensions.get('window');
 export default function Home() {
   const user = useSelector((state) => state.auth.user);
   const pets = useSelector((state) => state.auth?.userPets?.data || []);
-  const navigation = useNavigation();
+  const router = useRouter();
 
   const [parentData, setParentData] = useState(null);
   const [dashboard, setDashboard] = useState(null);
@@ -1047,9 +1047,7 @@ export default function Home() {
     setRefreshing(false);
   };
 
-  const openDrawer = () => navigation.dispatch(DrawerActions.openDrawer());
-
-  const navigateTo = (screen) => navigation.navigate(screen);
+  const navigateTo = (screen) => router.push(screen);
 
   const handlePetPress = (pet) => {
     setSelectedPet(pet);
@@ -1057,11 +1055,11 @@ export default function Home() {
   };
 
   const handleClinicPress = (clinic) => {
-    navigation.navigate('ClinicDetailScreen', { clinic });
+    router.push({ pathname: 'pages/ClinicDetailScreen', params: { clinic } });
   };
 
   const handleAppointmentPress = (appointment) => {
-    navigation.navigate('AppointmentDetail', { appointment });
+    router.push({ pathname: 'AppointmentDetail', params: { appointment } });
   };
 
   // Render Pet Card - IMPROVED VERSION
@@ -1234,10 +1232,10 @@ export default function Home() {
         {/* Header with Gradient */}
         <LinearGradient colors={['#4E8D7C', '#6BA896']} style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity onPress={openDrawer} style={styles.menuButton}>
+            <TouchableOpacity onPress={() => {}} style={styles.menuButton}>
               <Menu size={24} color="#fff" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigateTo('Notifications')} style={styles.notificationButton}>
+            <TouchableOpacity onPress={() => router.push('pages/Notifications')} style={styles.notificationButton}>
               <Bell size={24} color="#fff" />
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationBadgeText}>3</Text>

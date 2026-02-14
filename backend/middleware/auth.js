@@ -32,19 +32,14 @@ const auth = catchAsync(async (req, res, next) => {
       return next(new AppError('Account has been deactivated', 401));
     }
 
-    // 5. Check if user changed password after token was issued
-    if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
-      return next(new AppError('User recently changed password. Please log in again.', 401));
-    }
-
-    // 6. Add user to request
+    // 5. Add user to request
     req.user = user;
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
-      return next(new AppError('Invalid token', 401));
+      return next(new AppError('Invalid token. Please log in again.', 401));
     } else if (error.name === 'TokenExpiredError') {
-      return next(new AppError('Token expired', 401));
+      return next(new AppError('Your session has expired. Please log in again.', 401));
     }
     return next(new AppError('Authentication failed', 401));
   }
