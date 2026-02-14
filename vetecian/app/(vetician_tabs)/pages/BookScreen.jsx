@@ -10,9 +10,10 @@ import {
 import { getDatabase, ref, onValue } from "firebase/database";
 import { auth } from "../../../firebase.config";
 import { useSelector, useDispatch } from "react-redux";
-import { getPetsByUserId } from "../../../store/slices/authSlice";
+import { getPetsByUserId, getParent, isProfileComplete } from "../../../store/slices/authSlice";
 import { useFocusEffect } from "expo-router";
 import { router } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const services = [
   "Video Consultation",
@@ -44,6 +45,7 @@ const clinics = [
 export default function BookScreen() {
   const dispatch = useDispatch();
   const reduxPets = useSelector(state => state.auth?.userPets?.data || []);
+  const parentData = useSelector(state => state.auth?.parentData?.data);
   const [loading, setLoading] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
@@ -53,12 +55,66 @@ export default function BookScreen() {
 
   useFocusEffect(
     React.useCallback(() => {
-      setLoading(true);
-      dispatch(getPetsByUserId()).finally(() => setLoading(false));
+      const checkProfile = async () => {
+        setLoading(true);
+        try {
+          const userId = await AsyncStorage.getItem('userId');
+          if (userId) {
+            await dispatch(getParent(userId));
+          }
+          await dispatch(getPetsByUserId());
+        } finally {
+          setLoading(false);
+        }
+      };
+      checkProfile();
     }, [])
   );
 
+  useEffect(() => {
+    if (!loading && parentData) {
+      console.log('📋 Parent Data:', JSON.stringify(parentData, null, 2));
+      const parent = parentData.parent?.[0] || parentData;
+      console.log('📋 Checking parent:', parent);
+      const profileComplete = isProfileComplete(parent);
+      console.log('📋 Profile complete:', profileComplete);
+      
+      if (!profileComplete) {
+        Alert.alert(
+          'Complete Your Profile',
+          'Please complete your profile to book appointments.',
+          [
+            {
+              text: 'Complete Profile',
+              onPress: () => router.push('/(vetician_tabs)/(tabs)/ProfileDetails?fromBooking=true')
+            }
+          ],
+          { cancelable: false }
+        );
+      }
+    }
+  }, [loading, parentData]);
+
   const confirmBooking = () => {
+    const parent = parentData?.parent?.[0] || parentData;
+    console.log('📋 Confirm - Checking parent:', parent);
+    const profileComplete = isProfileComplete(parent);
+    console.log('📋 Confirm - Profile complete:', profileComplete);
+    
+    if (!profileComplete) {
+      Alert.alert(
+        'Complete Your Profile',
+        'Please complete your profile before booking.',
+        [
+          {
+            text: 'Complete Profile',
+            onPress: () => router.push('/(vetician_tabs)/(tabs)/ProfileDetails?fromBooking=true')
+          }
+        ]
+      );
+      return;
+    }
+
     const booking = {
       pet: selectedPet.name,
       service: selectedService,

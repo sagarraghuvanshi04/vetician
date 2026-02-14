@@ -49,10 +49,31 @@ export default function Profile() {
               gender: result.parent[0].gender || 'male',
               image: result.parent[0].image ? { uri: result.parent[0].image } : null
             });
+          } else if (user) {
+            // Use user data from signup if no parent profile exists
+            setFormData({
+              name: user.name || '',
+              email: user.email || '',
+              phone: '',
+              address: '',
+              gender: 'male',
+              image: null
+            });
           }
         }
       } catch (error) {
         console.error('Error fetching parent data:', error);
+        // Fallback to user data on error
+        if (user) {
+          setFormData({
+            name: user.name || '',
+            email: user.email || '',
+            phone: '',
+            address: '',
+            gender: 'male',
+            image: null
+          });
+        }
       } finally {
         setLoading(false);
       }

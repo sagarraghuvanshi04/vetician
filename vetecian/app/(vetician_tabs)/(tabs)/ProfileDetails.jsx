@@ -1,31 +1,30 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { useRouter } from 'expo-router';
-import { getParent, updateParent } from '../../../store/slices/authSlice';
-import { User, Mail, Phone, Calendar, Award, AlertCircle, ChevronRight, ChevronLeft, HelpCircle } from 'lucide-react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { getParent, updateParent, isProfileComplete } from '../../../store/slices/authSlice';
+import { User, Mail, Phone, MapPin, Award, AlertCircle, ChevronRight, ChevronLeft, HelpCircle, CheckCircle } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { validateEmail } from '../../../utils/validation';
-import DateTimePicker from '@react-native-community/datetimepicker';
 
 export default function ProfileDetails() {
   const dispatch = useDispatch();
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [parentData, setParentData] = useState(null);
+  const [showIncompleteAlert, setShowIncompleteAlert] = useState(false);
   const { user } = useSelector(state => state.auth);
   
   const [editingField, setEditingField] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [tempDate, setTempDate] = useState(new Date());
   
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     email: '',
     gender: 'Male',
-    dateOfBirth: '',
+    address: '',
     emergencyContact: ''
   });
   
@@ -41,20 +40,37 @@ export default function ProfileDetails() {
           setParentData(parent);
           
           if (parent) {
-            const dob = parent.dateOfBirth ? new Date(parent.dateOfBirth).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : '';
-            
             setFormData({
               name: parent.name || '',
               phone: parent.phone || '',
               email: parent.email || user?.email || '',
               gender: parent.gender ? parent.gender.charAt(0).toUpperCase() + parent.gender.slice(1) : 'Male',
-              dateOfBirth: dob,
+              address: parent.address || '',
               emergencyContact: parent.emergencyContact || ''
+            });
+          } else if (user) {
+            setFormData({
+              name: user.name || '',
+              phone: '',
+              email: user.email || '',
+              gender: 'Male',
+              address: '',
+              emergencyContact: ''
             });
           }
         }
       } catch (error) {
         console.error('Error fetching parent data:', error);
+        if (user) {
+          setFormData({
+            name: user.name || '',
+            phone: '',
+            email: user.email || '',
+            gender: 'Male',
+            address: '',
+            emergencyContact: ''
+          });
+        }
       } finally {
         setLoading(false);
       }
@@ -63,19 +79,17 @@ export default function ProfileDetails() {
     fetchParentData();
   }, [dispatch, user]);
 
+  useEffect(() => {
+    if (!loading && params?.fromBooking && parentData) {
+      const profileComplete = isProfileComplete(parentData);
+      if (!profileComplete) {
+        setShowIncompleteAlert(true);
+      }
+    }
+  }, [loading, params, parentData]);
+
   const handleFieldPress = (field, currentValue) => {
     if (field === 'phone' || field === 'memberSince') {
-      return;
-    }
-    
-    if (field === 'dateOfBirth') {
-      setShowDatePicker(true);
-      if (formData.dateOfBirth) {
-        const parsedDate = new Date(formData.dateOfBirth);
-        if (!isNaN(parsedDate.getTime())) {
-          setTempDate(parsedDate);
-        }
-      }
       return;
     }
     
@@ -93,6 +107,11 @@ export default function ProfileDetails() {
       return;
     }
     
+    if (editingField === 'name' && tempValue.trim().length < 2) {
+      Alert.alert('Error', 'Name must be at least 2 characters');
+      return;
+    }
+    
     if (editingField === 'email') {
       if (!tempValue.trim()) {
         Alert.alert('Error', 'Email is required');
@@ -104,89 +123,46 @@ export default function ProfileDetails() {
       }
     }
 
+    if (editingField === 'address' && tempValue.trim().length > 0 && tempValue.trim().length < 10) {
+      Alert.alert('Error', 'Please enter a complete address');
+      return;
+    }
+
+    if (editingField === 'emergencyContact' && tempValue.trim().length > 0 && tempValue.trim().length < 10) {
+      Alert.alert('Error', 'Please enter a valid phone number');
+      return;
+    }
+
     try {
       setSaving(true);
-      
-      let dateOfBirthISO = parentData?.dateOfBirth || '';
-      if (formData.dateOfBirth) {
-        const parsedDate = new Date(formData.dateOfBirth);
-        if (!isNaN(parsedDate.getTime())) {
-          dateOfBirthISO = parsedDate.toISOString();
-        }
-      }
 
       const result = await dispatch(updateParent({
         name: newFormData.name.trim(),
         email: newFormData.email.trim(),
-        phone: newFormData.phone,
+        phone: newFormData.phone || 'Not provided',
         gender: newFormData.gender.toLowerCase(),
-        dateOfBirth: dateOfBirthISO,
+        address: newFormData.address || 'Not provided',
         emergencyContact: newFormData.emergencyContact,
-        address: parentData?.address || '',
         image: parentData?.image || null
       })).unwrap();
 
       if (result.success) {
         setFormData(newFormData);
+        setParentData(result.parent || result.data);
         setEditingField(null);
-        Alert.alert('Success', 'Profile updated successfully!');
+        
+        const updatedParent = result.parent || result.data;
+        const profileComplete = isProfileComplete(updatedParent);
+        
+        if (profileComplete) {
+          Alert.alert('Success', 'Profile completed successfully!');
+        } else {
+          Alert.alert('Success', 'Profile updated successfully!');
+        }
       }
     } catch (error) {
       console.error('Save error:', error);
       Alert.alert('Error', error.message || 'Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDateChange = (event, selectedDate) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-    
-    if (selectedDate) {
-      setTempDate(selectedDate);
-      const formattedDate = selectedDate.toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-      
-      if (Platform.OS === 'ios') {
-        setFormData({ ...formData, dateOfBirth: formattedDate });
-      } else {
-        saveDateOfBirth(selectedDate);
-      }
-    }
-  };
-
-  const saveDateOfBirth = async (date) => {
-    try {
-      setSaving(true);
-      const formattedDate = date.toLocaleDateString('en-US', { 
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-
-      const result = await dispatch(updateParent({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        gender: formData.gender.toLowerCase(),
-        dateOfBirth: date.toISOString(),
-        emergencyContact: formData.emergencyContact,
-        address: parentData?.address || '',
-        image: parentData?.image || null
-      })).unwrap();
-
-      if (result.success) {
-        setFormData({ ...formData, dateOfBirth: formattedDate });
-        Alert.alert('Success', 'Date of birth updated successfully!');
-      }
-    } catch (error) {
-      console.error('Save error:', error);
-      Alert.alert('Error', error.message || 'Failed to update date of birth');
     } finally {
       setSaving(false);
     }
@@ -199,18 +175,26 @@ export default function ProfileDetails() {
       const result = await dispatch(updateParent({
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
+        phone: formData.phone || 'Not provided',
         gender: gender.toLowerCase(),
-        dateOfBirth: parentData?.dateOfBirth || '',
+        address: formData.address || 'Not provided',
         emergencyContact: formData.emergencyContact,
-        address: parentData?.address || '',
         image: parentData?.image || null
       })).unwrap();
 
       if (result.success) {
         setFormData({ ...formData, gender });
+        setParentData(result.parent || result.data);
         setEditingField(null);
-        Alert.alert('Success', 'Gender updated successfully!');
+        
+        const updatedParent = result.parent || result.data;
+        const profileComplete = isProfileComplete(updatedParent);
+        
+        if (profileComplete) {
+          Alert.alert('Success', 'Profile completed successfully!');
+        } else {
+          Alert.alert('Success', 'Gender updated successfully!');
+        }
       }
     } catch (error) {
       console.error('Save error:', error);
@@ -254,6 +238,13 @@ export default function ProfileDetails() {
       </View>
 
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {showIncompleteAlert && (
+          <View style={styles.alertBanner}>
+            <AlertCircle size={20} color="#F59E0B" />
+            <Text style={styles.alertText}>Please complete your profile</Text>
+          </View>
+        )}
+        
         <View style={styles.content}>
           {/* Name Field */}
           <TouchableOpacity 
@@ -322,19 +313,19 @@ export default function ProfileDetails() {
             </View>
           </TouchableOpacity>
 
-          {/* Date of Birth Field */}
+          {/* Address Field */}
           <TouchableOpacity 
             style={styles.fieldContainer}
-            onPress={() => handleFieldPress('dateOfBirth', formData.dateOfBirth)}
+            onPress={() => handleFieldPress('address', formData.address)}
           >
             <View style={styles.fieldLeft}>
               <View style={styles.iconContainer}>
-                <Calendar size={24} color="#666" />
+                <MapPin size={24} color="#666" />
               </View>
               <View style={styles.fieldContent}>
-                <Text style={styles.fieldLabel}>Date of Birth</Text>
-                {formData.dateOfBirth ? (
-                  <Text style={styles.fieldValue}>{formData.dateOfBirth}</Text>
+                <Text style={styles.fieldLabel}>Address</Text>
+                {formData.address ? (
+                  <Text style={styles.fieldValue}>{formData.address}</Text>
                 ) : (
                   <Text style={styles.requiredText}>Required</Text>
                 )}
@@ -383,7 +374,7 @@ export default function ProfileDetails() {
 
       {/* Edit Field Modal */}
       <Modal
-        visible={editingField !== null && editingField !== 'dateOfBirth' && editingField !== 'gender'}
+        visible={editingField !== null && editingField !== 'gender'}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setEditingField(null)}
@@ -397,6 +388,7 @@ export default function ProfileDetails() {
               <Text style={styles.modalTitle}>
                 {editingField === 'name' && 'Edit Name'}
                 {editingField === 'email' && 'Edit Email'}
+                {editingField === 'address' && 'Edit Address'}
                 {editingField === 'emergencyContact' && 'Emergency Contact'}
               </Text>
               <TouchableOpacity onPress={handleSaveField} disabled={saving}>
@@ -407,15 +399,18 @@ export default function ProfileDetails() {
             </View>
             <View style={styles.modalBody}>
               <TextInput
-                style={styles.modalInput}
+                style={[styles.modalInput, editingField === 'address' && styles.modalInputMultiline]}
                 value={tempValue}
                 onChangeText={setTempValue}
                 placeholder={
                   editingField === 'name' ? 'Enter your name' :
                   editingField === 'email' ? 'Enter your email' :
+                  editingField === 'address' ? 'Enter your address' :
                   'Enter emergency contact'
                 }
                 keyboardType={editingField === 'email' ? 'email-address' : 'default'}
+                multiline={editingField === 'address'}
+                numberOfLines={editingField === 'address' ? 3 : 1}
                 autoFocus
               />
             </View>
@@ -457,46 +452,6 @@ export default function ProfileDetails() {
           </View>
         </View>
       </Modal>
-
-      {/* Date Picker */}
-      {showDatePicker && (
-        <Modal
-          visible={showDatePicker}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => setShowDatePicker(false)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <TouchableOpacity onPress={() => setShowDatePicker(false)}>
-                  <Text style={styles.modalCancel}>Cancel</Text>
-                </TouchableOpacity>
-                <Text style={styles.modalTitle}>Select Date of Birth</Text>
-                <TouchableOpacity 
-                  onPress={() => {
-                    saveDateOfBirth(tempDate);
-                    setShowDatePicker(false);
-                  }}
-                  disabled={saving}
-                >
-                  <Text style={[styles.modalSave, saving && styles.modalSaveDisabled]}>
-                    {saving ? 'Saving...' : 'Done'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={tempDate}
-                mode="date"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={handleDateChange}
-                maximumDate={new Date()}
-                style={styles.datePicker}
-              />
-            </View>
-          </View>
-        </Modal>
-      )}
     </View>
   );
 }
@@ -550,6 +505,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   scrollContainer: {
+    flex: 1,
+  },
+  alertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    padding: 16,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 12,
+    gap: 12,
+  },
+  alertText: {
+    fontSize: 15,
+    color: '#92400E',
+    fontWeight: '500',
     flex: 1,
   },
   content: {
@@ -652,6 +623,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     backgroundColor: '#F9F9F9',
   },
+  modalInputMultiline: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
   genderOption: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -668,9 +643,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#007AFF',
     fontWeight: 'bold',
-  },
-  datePicker: {
-    width: '100%',
-    height: 200,
   },
 });

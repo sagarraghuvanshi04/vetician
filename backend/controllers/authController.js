@@ -33,7 +33,7 @@ const register = catchAsync(async (req, res, next) => {
   console.log('🔍 REGISTER API - Request started');
   console.log('📝 REGISTER API - Request body:', req.body);
   
-  const { name, email, password, role = 'vetician' } = req.body;
+  const { name, email, password, role = 'pet_parent' } = req.body;
   
   console.log('📋 REGISTER API - Extracted data:', {
     name: name ? name.trim() : name,
@@ -43,7 +43,7 @@ const register = catchAsync(async (req, res, next) => {
   });
 
   // Updated role validation
-  if (role && !['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(role)) {
+  if (role && !['veterinarian', 'pet_parent', 'paravet', 'pet_resort'].includes(role)) {
     console.log('❌ REGISTER API - Invalid role specified:', role);
     return next(new AppError('Invalid role specified', 400));
   }
@@ -87,7 +87,7 @@ const register = catchAsync(async (req, res, next) => {
 
   // Create role-specific entry
   try {
-    if (role === 'vetician') {
+    if (role === 'pet_parent') {
       console.log('➕ REGISTER API - Creating parent entry for vetician...');
       const parent = new Parent({
         name: user.name,
@@ -171,7 +171,7 @@ const deleteAccount = catchAsync(async (req, res, next) => {
   }
 
   // Validate login type
-  if (!['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(loginType)) {
+  if (!['veterinarian', 'pet_parent', 'paravet', 'pet_resort'].includes(loginType)) {
     return next(new AppError('Invalid login type specified', 400));
   }
 
@@ -252,8 +252,8 @@ const login = catchAsync(async (req, res, next) => {
     loginType
   });
 
-  // Updated to accept new roles
-  if (!['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(loginType)) {
+  // Validate login type
+  if (!['veterinarian', 'pet_parent', 'paravet', 'pet_resort'].includes(loginType)) {
     console.log('❌ LOGIN API - Invalid login type:', loginType);
     return next(new AppError('Invalid login type specified', 400));
   }

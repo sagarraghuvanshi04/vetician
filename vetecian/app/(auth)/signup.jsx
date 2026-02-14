@@ -97,7 +97,7 @@ export default function SignUp() {
                   case 'peravet':
                     router.replace('/(peravet_tabs)/(tabs)');
                     break;
-                  default: // vetician / pet parent
+                  default: // pet_parent
                     router.replace('/(vetician_tabs)/onboarding/onboarding_conf');
                 }
               },

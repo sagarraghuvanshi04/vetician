@@ -171,7 +171,7 @@ export const signUpUser = createAsyncThunk(
   async ({ name, email, password, role = 'vetician' }, { rejectWithValue }) => {
     try {
       const BASE_URL = getApiBaseUrl();
-      const headers = await getCommonHeaders(false); // No auth needed for signup
+      const headers = await getCommonHeaders(false);
       const res = await fetch(`${BASE_URL}/auth/register`, {
         method: 'POST',
         headers,
@@ -182,7 +182,12 @@ export const signUpUser = createAsyncThunk(
         throw new Error(`HTTP ${res.status}: ${text}`);
       }
       const data = await res.json();
-      if (data.user?._id) await AsyncStorage.setItem('userId', data.user._id);
+      if (data.user?._id) {
+        await AsyncStorage.setItem('userId', data.user._id);
+      }
+      if (data.token) {
+        await AsyncStorage.setItem('token', data.token);
+      }
       return data;
     } catch (error) {
       return rejectWithValue(error.message || 'Sign up failed');
@@ -251,14 +256,45 @@ export const updateParent = createAsyncThunk(
   async (parentData, { rejectWithValue, dispatch }) => {
     try {
       const userId = await AsyncStorage.getItem('userId');
-      if (!userId) return rejectWithValue('User not authenticated');
+      console.log('🔍 updateParent - userId from storage:', userId);
+      
+      if (!userId) {
+        console.log('❌ updateParent - No userId found in AsyncStorage');
+        return rejectWithValue('User not authenticated. Please login again.');
+      }
+      
       const BASE_URL = getApiBaseUrl();
       const headers = await getCommonHeaders(true);
-      const res = await fetch(`${BASE_URL}/auth/parent/${userId}`, {
-        method: 'PUT',
+      
+      console.log('📤 updateParent - Sending request to:', `${BASE_URL}/auth/parents/${userId}`);
+      console.log('📤 updateParent - Data:', parentData);
+      
+      const res = await fetch(`${BASE_URL}/auth/parents/${userId}`, {
+        method: 'PATCH',
         headers,
         body: JSON.stringify(parentData),
       });
+      
+      console.log('📥 updateParent - Response status:', res.status);
+      
+      // If parent not found, create it first
+      if (res.status === 404) {
+        console.log('🔄 Parent not found, creating new parent profile...');
+        const createRes = await fetch(`${BASE_URL}/auth/parent-register`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ ...parentData, userId }),
+        });
+        
+        if (!createRes.ok) {
+          const errorText = await createRes.text();
+          throw new Error(errorText || `Failed to create parent profile`);
+        }
+        
+        const result = await createRes.json();
+        console.log('✅ Parent profile created successfully');
+        return result;
+      }
       
       if (res.status === 401) {
         const data = await res.json();
@@ -269,9 +305,17 @@ export const updateParent = createAsyncThunk(
         }
       }
       
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.log('❌ updateParent - Error response:', errorText);
+        throw new Error(errorText || `HTTP ${res.status}`);
+      }
+      
+      const result = await res.json();
+      console.log('✅ updateParent - Success:', result);
+      return result;
     } catch (error) {
+      console.log('❌ updateParent - Error:', error.message);
       return rejectWithValue(error.message || 'Failed to update parent profile');
     }
   }
@@ -541,10 +585,57 @@ const authSlice = createSlice({
       .addCase(parentUser.rejected, (state, action) => {
         state.parentData.loading = false;
         state.parentData.error = action.payload;
+      })
+      .addCase(updateParent.pending, (state) => {
+        state.parentData.loading = true;
+        state.parentData.error = null;
+      })
+      .addCase(updateParent.fulfilled, (state, action) => {
+        state.parentData.loading = false;
+        state.parentData.data = action.payload;
+      })
+      .addCase(updateParent.rejected, (state, action) => {
+        state.parentData.loading = false;
+        state.parentData.error = action.payload;
+      })
+      .addCase(getParent.pending, (state) => {
+        state.parentData.loading = true;
+        state.parentData.error = null;
+      })
+      .addCase(getParent.fulfilled, (state, action) => {
+        state.parentData.loading = false;
+        state.parentData.data = action.payload;
+      })
+      .addCase(getParent.rejected, (state, action) => {
+        state.parentData.loading = false;
+        state.parentData.error = action.payload;
       });
   },
 });
 
 export const { clearError, clearLoading } = authSlice.actions;
 export { signOutUser as signOut }; // Export signOutUser as signOut for backend integration
+
+// Helper function to check if profile is complete
+export const isProfileComplete = (parentData) => {
+  console.log('🔍 isProfileComplete - Input:', parentData);
+  if (!parentData) {
+    console.log('❌ isProfileComplete - No parent data');
+    return false;
+  }
+  
+  const checks = {
+    hasName: parentData.name && parentData.name.length >= 2,
+    hasEmail: !!parentData.email,
+    hasPhone: parentData.phone && parentData.phone !== 'Not provided',
+    hasAddress: parentData.address && parentData.address !== 'Not provided' && parentData.address.length >= 10
+  };
+  
+  console.log('🔍 isProfileComplete - Checks:', checks);
+  const isComplete = checks.hasName && checks.hasEmail && checks.hasPhone && checks.hasAddress;
+  console.log('🔍 isProfileComplete - Result:', isComplete);
+  
+  return isComplete;
+};
+
 export default authSlice.reducer;

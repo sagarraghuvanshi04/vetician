@@ -159,6 +159,7 @@ class ApiService {
   }
 
   getVerifiedParavets() {
+    console.log('🔍 Calling GET /paravet/verified');
     return this.get('/paravet/verified');
   }
 
