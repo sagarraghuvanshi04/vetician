@@ -1,11 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, FlatList, Modal, TextInput, TouchableWithoutFeedback } from 'react-native';
+
+
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigation, useRouter } from 'expo-router';
-import { signOut, getParent, parentUser, updateParent } from '../../../store/slices/authSlice';
-import { User, Mail, Calendar, MapPin, Phone, Edit, LogOut, X } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { signOut, getParent, updateParent } from '../../../store/slices/authSlice';
+import { User, Mail, MapPin, Phone, LogOut, X, Star, HelpCircle, PawPrint, Heart, Stethoscope, Calendar as CalendarIcon, Package, Users, BookOpen, Bell, Settings, Gift } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons';
 import PetDetailModal from '../../../components/petparent/home/PetDetailModal';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -31,7 +32,6 @@ export default function Profile() {
   const [isUploading, setIsUploading] = useState(false);
   const { user } = useSelector(state => state.auth);
   const pets = useSelector(state => state.auth?.userPets?.data || []);
-  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchParentData = async () => {
@@ -62,34 +62,15 @@ export default function Profile() {
   }, [dispatch, user]);
 
   const handleSignOut = async () => {
-    console.log('🔴 SIGN OUT BUTTON CLICKED!');
-    
     try {
-      console.log('🔍 Starting direct sign out...');
-      
-      // Clear AsyncStorage directly
       await AsyncStorage.multiRemove(['userId', 'token']);
-      console.log('✅ AsyncStorage cleared');
-      
-      // Dispatch the thunk
-      const result = await dispatch(signOut()).unwrap();
-      console.log('✅ SignOut thunk completed:', result);
-      
-      // Navigate
+      await dispatch(signOut()).unwrap();
       router.replace('/(auth)/signin');
-      console.log('✅ Navigation completed');
-      
     } catch (error) {
       console.log('❌ Sign out error:', error);
-      // Force clear and navigate anyway
       await AsyncStorage.multiRemove(['userId', 'token']);
       router.replace('/(auth)/signin');
     }
-  };
-
-  const handlePetPress = (pet) => {
-    setSelectedPet(pet);
-    setPetModalVisible(true);
   };
 
   const validatePhone = (phone) => {
@@ -251,69 +232,87 @@ export default function Profile() {
     }
   };
 
-  const renderPetCard = ({ item }) => {
-    const getPetIcon = () => {
-      const PET_TYPES = {
-        Dog: 'dog',
-        Cat: 'cat',
-        default: 'paw'
-      };
-      return PET_TYPES[item.species] || PET_TYPES.default;
-    };
+  const averageRating = 4.68;
 
-    return (
-      <TouchableOpacity
-        style={styles.petCard}
-        onPress={() => handlePetPress(item)}
-      >
-        <View style={styles.petImageContainer}>
-          {item?.petPhoto ? (
-            <Image 
-              source={{ uri: item.petPhoto }} 
-              style={styles.petImage}
-              onError={() => console.log('Image load failed for:', item.petPhoto)}
-            />
-          ) : (
-            <View style={styles.petImagePlaceholder}>
-              <FontAwesome5
-                name={getPetIcon()}
-                size={24}
-                color="#4E8D7C"
-              />
-            </View>
-          )}
-        </View>
-        <View style={styles.petInfoContainer}>
-          <Text style={styles.petName} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.petDetails}>
-            <Text style={styles.petType}>{item.species}</Text>
-            {item.breed && (
-              <Text style={styles.petBreed} numberOfLines={1}>• {item.breed}</Text>
-            )}
-          </View>
-          {item.gender && (
-            <View style={styles.petGender}>
-              <MaterialCommunityIcons
-                name={item.gender.toLowerCase() === 'male' ? 'gender-male' : 'gender-female'}
-                size={16}
-                color="#7D7D7D"
-              />
-              <Text style={styles.petGenderText}>{item.gender}</Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
-
-  const profileInfo = [
-    { icon: Mail, label: 'Email', value: parentData?.email || user?.email || 'Not provided' },
-    { icon: Phone, label: 'Phone', value: parentData?.phone || 'Not provided' },
-    { icon: MapPin, label: 'Address', value: parentData?.address || 'Not provided' },
+  const menuItems = [
     {
-      icon: Calendar,
-      label: 'Registered',
-      value: parentData?.createdAt ? new Date(parentData.createdAt).toLocaleDateString() : 'Not registered yet'
+      id: 'my-pets',
+      icon: PawPrint,
+      title: 'My Pets',
+      subtitle: `${pets.length} registered`,
+      onPress: () => router.push('/pets'),
+      color: '#6366F1'
+    },
+    {
+      id: 'appointments',
+      icon: CalendarIcon,
+      title: 'Appointments',
+      onPress: () => router.push('/appointments'),
+      color: '#EC4899'
+    },
+    {
+      id: 'medical-records',
+      icon: Stethoscope,
+      title: 'Medical Records',
+      onPress: () => router.push('/medical-records'),
+      color: '#10B981'
+    },
+    {
+      id: 'favorites',
+      icon: Heart,
+      title: 'Favorite Vets',
+      onPress: () => router.push('/favorites'),
+      color: '#EF4444'
+    },
+    {
+      id: 'pet-care',
+      icon: BookOpen,
+      title: 'Pet Care Tips',
+      onPress: () => router.push('/pet-care'),
+      color: '#F59E0B'
+    },
+    {
+      id: 'orders',
+      icon: Package,
+      title: 'Orders & Purchases',
+      onPress: () => router.push('/orders'),
+      color: '#8B5CF6'
+    },
+    {
+      id: 'community',
+      icon: Users,
+      title: 'Pet Community',
+      onPress: () => router.push('/community'),
+      color: '#14B8A6'
+    },
+    {
+      id: 'rewards',
+      icon: Gift,
+      title: 'Rewards & Points',
+      subtitle: 'Get special offers',
+      onPress: () => router.push('/rewards'),
+      color: '#F59E0B'
+    },
+    {
+      id: 'notifications',
+      icon: Bell,
+      title: 'Notifications',
+      onPress: () => router.push('/notifications'),
+      color: '#6366F1'
+    },
+    {
+      id: 'help',
+      icon: HelpCircle,
+      title: 'Help & Support',
+      onPress: () => router.push('/help'),
+      color: '#64748B'
+    },
+    {
+      id: 'settings',
+      icon: Settings,
+      title: 'Settings',
+      onPress: () => router.push('/settings'),
+      color: '#64748B'
     },
   ];
 
@@ -328,100 +327,92 @@ export default function Profile() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        {/* Header */}
         <View style={styles.header}>
-          <View style={styles.avatarContainer}>
-            {parentData?.image ? (
-              <Image
-                source={{ uri: parentData.image }}
-                style={styles.profileImage}
-                resizeMode="cover"
-                onError={() => console.log('Profile image load failed')}
-              />
-            ) : (
-              <View style={styles.avatar}>
-                <User size={40} color="#007AFF" />
-              </View>
-            )}
-            <TouchableOpacity
-              style={styles.editButton}
-              onPress={() => setEditModalVisible(true)}
-            >
-              <Edit size={20} color="#007AFF" />
-            </TouchableOpacity>
-          </View>
-          <Text style={styles.name}>{parentData?.name || user?.name || 'Pet Parent'}</Text>
-          <Text style={styles.gender}>{parentData?.gender ? parentData.gender.charAt(0).toUpperCase() + parentData.gender.slice(1) : ''}</Text>
-          <Text style={styles.email}>{parentData?.email || user?.email || 'user@example.com'}</Text>
+          <Text style={styles.headerTitle}>Profile</Text>
         </View>
 
-        <View style={styles.content}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Personal Information</Text>
-            <View style={styles.infoContainer}>
-              {profileInfo.map((info, index) => (
-                <View key={index} style={styles.infoItem}>
-                  <View style={styles.infoIcon}>
-                    <info.icon size={20} color="#666" />
-                  </View>
-                  <View style={styles.infoContent}>
-                    <Text style={styles.infoLabel}>{info.label}</Text>
-                    <Text style={styles.infoValue}>{info.value}</Text>
-                  </View>
+        {/* Profile Card - Click to open Profile Details */}
+        <View style={styles.profileCard}>
+          <TouchableOpacity 
+            style={styles.profileHeader}
+            onPress={() => router.push('ProfileDetails')}
+          >
+            <View style={styles.profileLeft}>
+              {parentData?.image ? (
+                <Image
+                  source={{ uri: parentData.image }}
+                  style={styles.profileAvatar}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.profileAvatarPlaceholder}>
+                  <User size={32} color="#64748B" />
                 </View>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>My Pets</Text>
-            </View>
-            {pets.length > 0 ? (
-              <FlatList
-                horizontal
-                data={pets}
-                renderItem={renderPetCard}
-                keyExtractor={item => item._id}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.petCarouselContainer}
-              />
-            ) : (
-              <View style={styles.noPetsContainer}>
-                <FontAwesome5 name="paw" size={32} color="#E0E0E0" />
-                <Text style={styles.noPetsText}>No pets registered yet</Text>
-                <TouchableOpacity
-                  style={styles.addPetButton}
-                  onPress={() => router.push('/pets/register')}
-                >
-                  <Text style={styles.addPetButtonText}>Add a Pet</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Actions</Text>
-            <View style={styles.actionsContainer}>
-              {!parentData && (
-                <TouchableOpacity
-                  style={styles.actionButton}
-                  onPress={() => router.push('onboarding/parent_detail')}
-                >
-                  <Edit size={20} color="#007AFF" />
-                  <Text style={styles.actionText}>Complete Registration</Text>
-                </TouchableOpacity>
               )}
-
-              <TouchableOpacity
-                style={[styles.actionButton, styles.signOutButton]}
-                onPress={handleSignOut}
-              >
-                <LogOut size={20} color="#ff3b30" />
-                <Text style={[styles.actionText, styles.signOutText]}>Sign Out</Text>
-              </TouchableOpacity>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>{parentData?.name || user?.name || 'Pet Parent'}</Text>
+                <Text style={styles.profilePhone}>{parentData?.phone || 'Not provided'}</Text>
+              </View>
             </View>
-          </View>
+            <View style={styles.chevronButton}>
+              <Text style={styles.chevronIcon}>›</Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Rating Section */}
+          <TouchableOpacity style={styles.ratingSection}>
+            <Star size={24} color="#F59E0B" fill="#F59E0B" />
+            <Text style={styles.ratingText}>{averageRating.toFixed(2)} My Rating</Text>
+            <View style={styles.chevronButton}>
+              <Text style={styles.chevronIcon}>›</Text>
+            </View>
+          </TouchableOpacity>
         </View>
+
+        {/* Menu Items */}
+        <View style={styles.menuContainer}>
+          {menuItems.map((item, index) => (
+            <TouchableOpacity
+              key={item.id}
+              style={[
+                styles.menuItem,
+                index === menuItems.length - 1 && styles.menuItemLast
+              ]}
+              onPress={item.onPress}
+            >
+              <View style={styles.menuItemLeft}>
+                <View style={[styles.menuIcon, { backgroundColor: `${item.color}15` }]}>
+                  <item.icon size={22} color={item.color} />
+                </View>
+                <View style={styles.menuTextContainer}>
+                  <Text style={styles.menuTitle}>{item.title}</Text>
+                  {item.subtitle && (
+                    <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                  )}
+                </View>
+              </View>
+              <View style={styles.chevronButton}>
+                <Text style={styles.chevronIcon}>›</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+
+          {/* Sign Out Button */}
+          <TouchableOpacity
+            style={[styles.menuItem, styles.menuItemLast]}
+            onPress={handleSignOut}
+          >
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.menuIcon, { backgroundColor: '#FEE2E2' }]}>
+                <LogOut size={22} color="#EF4444" />
+              </View>
+              <Text style={styles.menuTitle}>Sign Out</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.bottomSpacing} />
       </ScrollView>
 
       <PetDetailModal
@@ -433,158 +424,159 @@ export default function Profile() {
       {/* Edit Profile Modal */}
       <Modal
         visible={editModalVisible}
-        animationType="fade"
+        animationType="slide"
         transparent={true}
         onRequestClose={() => setEditModalVisible(false)}
       >
-        <TouchableWithoutFeedback onPress={() => setEditModalVisible(false)}>
-          <View style={styles.modalOverlay} />
-        </TouchableWithoutFeedback>
-        
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Edit Profile</Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={() => setEditModalVisible(false)}
-            >
-              <X size={24} color="#666" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Profile Picture</Text>
-              <TouchableOpacity style={styles.imageUploadContainer} onPress={pickImage}>
-                {formData.image ? (
-                  <Image source={{ uri: formData.image.uri || formData.image }} style={styles.modalProfileImage} />
-                ) : (
-                  <View style={styles.modalProfileImagePlaceholder}>
-                    <User size={40} color="#666" />
-                  </View>
-                )}
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Edit Profile</Text>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => setEditModalVisible(false)}
+              >
+                <X size={24} color="#666" />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Personal Information</Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputWrapper}>
-                  <User size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, errors.name && styles.inputError]}
-                    placeholder="Full name"
-                    value={formData.name}
-                    onChangeText={(value) => handleInputChange('name', value)}
-                  />
-                </View>
-                {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>Profile Picture</Text>
+                <TouchableOpacity style={styles.imageUploadContainer} onPress={pickImage}>
+                  {formData.image ? (
+                    <Image source={{ uri: formData.image.uri || formData.image }} style={styles.modalProfileImage} />
+                  ) : (
+                    <View style={styles.modalProfileImagePlaceholder}>
+                      <User size={40} color="#666" />
+                    </View>
+                  )}
+                  <Text style={styles.changePhotoText}>Change Photo</Text>
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.inputContainer}>
-                <View style={styles.inputWrapper}>
-                  <Mail size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, errors.email && styles.inputError]}
-                    placeholder="Email"
-                    value={formData.email}
-                    onChangeText={(value) => handleInputChange('email', value)}
-                    keyboardType="email-address"
-                  />
+              <View style={styles.modalSection}>
+                <Text style={styles.modalSectionTitle}>Personal Information</Text>
+                
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Full Name</Text>
+                  <View style={styles.inputWrapper}>
+                    <User size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, errors.name && styles.inputError]}
+                      placeholder="Enter your name"
+                      value={formData.name}
+                      onChangeText={(value) => handleInputChange('name', value)}
+                    />
+                  </View>
+                  {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
                 </View>
-                {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <View style={styles.inputWrapper}>
+                    <Mail size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, errors.email && styles.inputError]}
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChangeText={(value) => handleInputChange('email', value)}
+                      keyboardType="email-address"
+                    />
+                  </View>
+                  {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Phone Number</Text>
+                  <View style={styles.inputWrapper}>
+                    <Phone size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, errors.phone && styles.inputError]}
+                      placeholder="Enter your phone number"
+                      value={formData.phone}
+                      onChangeText={(value) => handleInputChange('phone', value)}
+                      keyboardType="phone-pad"
+                    />
+                  </View>
+                  {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
+                </View>
+
+                <View style={styles.inputContainer}>
+                  <Text style={styles.inputLabel}>Address</Text>
+                  <View style={styles.inputWrapper}>
+                    <MapPin size={20} color="#666" style={styles.inputIcon} />
+                    <TextInput
+                      style={[styles.input, errors.address && styles.inputError]}
+                      placeholder="Enter your address"
+                      value={formData.address}
+                      onChangeText={(value) => handleInputChange('address', value)}
+                      multiline
+                    />
+                  </View>
+                  {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
+                </View>
+
+                <View style={styles.genderContainer}>
+                  <Text style={styles.inputLabel}>Gender</Text>
+                  <View style={styles.genderOptions}>
+                    <TouchableOpacity
+                      style={[
+                        styles.genderOption,
+                        formData.gender === 'male' && styles.genderOptionSelected
+                      ]}
+                      onPress={() => handleInputChange('gender', 'male')}
+                    >
+                      <Text style={[
+                        styles.genderOptionText,
+                        formData.gender === 'male' && styles.genderOptionTextSelected
+                      ]}>
+                        Male
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.genderOption,
+                        formData.gender === 'female' && styles.genderOptionSelected
+                      ]}
+                      onPress={() => handleInputChange('gender', 'female')}
+                    >
+                      <Text style={[
+                        styles.genderOptionText,
+                        formData.gender === 'female' && styles.genderOptionTextSelected
+                      ]}>
+                        Female
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[
+                        styles.genderOption,
+                        formData.gender === 'other' && styles.genderOptionSelected
+                      ]}
+                      onPress={() => handleInputChange('gender', 'other')}
+                    >
+                      <Text style={[
+                        styles.genderOptionText,
+                        formData.gender === 'other' && styles.genderOptionTextSelected
+                      ]}>
+                        Other
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
 
-              <View style={styles.genderContainer}>
-                <Text style={styles.genderLabel}>Gender:</Text>
-                <View style={styles.genderOptions}>
-                  <TouchableOpacity
-                    style={[
-                      styles.genderOption,
-                      formData.gender === 'male' && styles.genderOptionSelected
-                    ]}
-                    onPress={() => handleInputChange('gender', 'male')}
-                  >
-                    <Text style={[
-                      styles.genderOptionText,
-                      formData.gender === 'male' && styles.genderOptionTextSelected
-                    ]}>
-                      Male
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.genderOption,
-                      formData.gender === 'female' && styles.genderOptionSelected
-                    ]}
-                    onPress={() => handleInputChange('gender', 'female')}
-                  >
-                    <Text style={[
-                      styles.genderOptionText,
-                      formData.gender === 'female' && styles.genderOptionTextSelected
-                    ]}>
-                      Female
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      styles.genderOption,
-                      formData.gender === 'other' && styles.genderOptionSelected
-                    ]}
-                    onPress={() => handleInputChange('gender', 'other')}
-                  >
-                    <Text style={[
-                      styles.genderOptionText,
-                      formData.gender === 'other' && styles.genderOptionTextSelected
-                    ]}>
-                      Other
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Contact Information</Text>
-              <View style={styles.inputContainer}>
-                <View style={styles.inputWrapper}>
-                  <Phone size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, errors.phone && styles.inputError]}
-                    placeholder="Phone number"
-                    value={formData.phone}
-                    onChangeText={(value) => handleInputChange('phone', value)}
-                    keyboardType="phone-pad"
-                  />
-                </View>
-                {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
-              </View>
-
-              <View style={styles.inputContainer}>
-                <View style={styles.inputWrapper}>
-                  <MapPin size={20} color="#666" style={styles.inputIcon} />
-                  <TextInput
-                    style={[styles.input, errors.address && styles.inputError]}
-                    placeholder="Address"
-                    value={formData.address}
-                    onChangeText={(value) => handleInputChange('address', value)}
-                    multiline
-                  />
-                </View>
-                {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.submitButton, (isUploading) && styles.submitButtonDisabled]}
-              onPress={handleSubmit}
-              disabled={isUploading}
-            >
-              <Text style={styles.submitButtonText}>
-                {isUploading ? 'Saving...' : 'Save Changes'}
-              </Text>
-            </TouchableOpacity>
-          </ScrollView>
+              <TouchableOpacity
+                style={[styles.submitButton, (isUploading) && styles.submitButtonDisabled]}
+                onPress={handleSubmit}
+                disabled={isUploading}
+              >
+                <Text style={styles.submitButtonText}>
+                  {isUploading ? 'Saving...' : 'Save Changes'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </View>
@@ -594,7 +586,7 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F8FAFC',
   },
   scrollContainer: {
     flex: 1,
@@ -604,377 +596,291 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: '#fff',
-    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
     paddingTop: 60,
-    paddingBottom: 32,
-    paddingHorizontal: 24,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  profileCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e1e5e9',
+    borderBottomColor: '#F1F5F9',
   },
-  avatarContainer: {
-    position: 'relative',
-    marginBottom: 16,
+  profileLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#007AFF20',
+  profileAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  profileAvatarPlaceholder: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: '#007AFF',
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#007AFF',
+  profileInfo: {
+    marginLeft: 12,
+    flex: 1,
   },
-  editButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
+  profileName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  profilePhone: {
+    fontSize: 14,
+    color: '#64748B',
+  },
+  chevronButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#007AFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  name: {
+  chevronIcon: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 4,
+    color: '#94A3B8',
+    fontWeight: '300',
   },
-  gender: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 4,
-    textTransform: 'capitalize',
-  },
-  email: {
-    fontSize: 16,
-    color: '#666',
-  },
-  content: {
-    padding: 24,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  viewAll: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  infoContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e1e5e9',
-  },
-  infoItem: {
+  ratingSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e1e5e9',
-  },
-  infoIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f8f9fa',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  infoValue: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1a1a1a',
-  },
-  petCarouselContainer: {
-    paddingBottom: 10,
-  },
-  petCard: {
-    width: 280,
-    backgroundColor: '#fff',
-    borderRadius: 16,
     padding: 16,
-    marginRight: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e1e5e9',
-  },
-  petImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
-    backgroundColor: '#f0f7f4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    overflow: 'hidden',
-  },
-  petImage: {
-    width: '100%',
-    height: '100%',
-  },
-  petImagePlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#e8f5e9',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  petInfoContainer: {
-    flex: 1,
-  },
-  petName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    marginBottom: 4,
-  },
-  petDetails: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  petType: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4E8D7C',
-  },
-  petBreed: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    flexShrink: 1,
-  },
-  petGender: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  petGenderText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-  },
-  noPetsContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#e1e5e9',
-  },
-  noPetsText: {
-    fontSize: 16,
-    color: '#666',
-    marginVertical: 12,
-  },
-  addPetButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  addPetButtonText: {
-    color: '#fff',
-    fontWeight: '500',
-    fontSize: 16,
-  },
-  actionsContainer: {
     gap: 12,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e1e5e9',
-  },
-  signOutButton: {
-    borderColor: '#ff3b30',
-    backgroundColor: '#ff3b3010',
-  },
-  actionText: {
+  ratingText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#007AFF',
-    marginLeft: 12,
+    color: '#0F172A',
+    flex: 1,
   },
-  signOutText: {
-    color: '#ff3b30',
+  menuContainer: {
+    marginTop: 20,
+    marginHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  // Modal styles
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  menuIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  menuTextContainer: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#0F172A',
+  },
+  menuSubtitle: {
+    fontSize: 13,
+    color: '#64748B',
+    marginTop: 2,
+  },
+  bottomSpacing: {
+    height: 40,
+  },
   modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
   },
   modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    margin: 20,
-    marginTop: 50,
-    marginBottom: 50,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    paddingTop: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   modalTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#0F172A',
   },
   closeButton: {
-    padding: 8,
-  },
-  modalContent: {
-    flexGrow: 1,
-  },
-  imageUploadContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalProfileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  modalProfileImagePlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#f0f0f0',
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  modalContent: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  modalSection: {
+    marginTop: 24,
+  },
+  modalSectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginBottom: 16,
+  },
+  imageUploadContainer: {
+    alignItems: 'center',
+  },
+  modalProfileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  modalProfileImagePlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  changePhotoText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#3B82F6',
+    fontWeight: '500',
+  },
   inputContainer: {
-    marginBottom: 15,
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#475569',
+    marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    height: 50,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 52,
   },
   inputIcon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    height: '100%',
-    color: '#333',
+    fontSize: 15,
+    color: '#0F172A',
   },
   inputError: {
-    borderColor: 'red',
+    borderColor: '#EF4444',
   },
   errorText: {
-    color: 'red',
+    color: '#EF4444',
     fontSize: 12,
-    marginTop: 5,
-    paddingLeft: 5,
+    marginTop: 6,
+    marginLeft: 4,
   },
   genderContainer: {
-    marginTop: 15,
-  },
-  genderLabel: {
-    fontSize: 16,
-    color: '#444',
-    marginBottom: 10,
+    marginTop: 8,
   },
   genderOptions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 8,
   },
   genderOption: {
     flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 10,
-    borderRadius: 8,
+    height: 48,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   genderOptionSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
   },
   genderOptionText: {
-    color: '#333',
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#475569',
   },
   genderOptionTextSelected: {
-    color: '#fff',
+    color: '#FFFFFF',
   },
   submitButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-    height: 50,
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    height: 52,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 24,
+    marginBottom: 32,
   },
   submitButtonDisabled: {
-    backgroundColor: '#A0C4FF',
+    backgroundColor: '#94A3B8',
   },
   submitButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });
+

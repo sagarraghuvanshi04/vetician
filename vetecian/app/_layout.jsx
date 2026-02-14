@@ -1,6 +1,6 @@
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '../store/store';
 import { View, Text, StyleSheet } from 'react-native';
@@ -17,43 +17,34 @@ function LoadingScreen() {
 function AuthGuard({ children }) {
   const router = useRouter();
   const segments = useSegments();
-  const [isReady, setIsReady] = useState(false);
+  const navigationState = useRootNavigationState();
+  const { isAuthenticated, user } = useSelector(state => state.auth);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('token');
-      const user = localStorage.getItem('user');
-      const inAuthGroup = segments[0] === '(auth)';
+    if (!navigationState?.key) return;
 
-      if (!token && !inAuthGroup) {
-        router.replace('/(auth)/signin');
-      } else if (token && inAuthGroup) {
-        const userData = JSON.parse(user || '{}');
-        const role = userData.role || 'vetician';
-        
-        switch(role) {
-          case 'veterinarian':
-            router.replace('/(doc_tabs)');
-            break;
-          case 'pet_resort':
-            router.replace('/(pet_resort_tabs)');
-            break;
-          case 'paravet':
-            router.replace('/(peravet_tabs)/(tabs)');
-            break;
-          default:
-            router.replace('/(vetician_tabs)');
-        }
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/signin');
+    } else if (isAuthenticated && inAuthGroup) {
+      const role = user?.role || 'vetician';
+      
+      switch(role) {
+        case 'veterinarian':
+          router.replace('/(doc_tabs)');
+          break;
+        case 'pet_resort':
+          router.replace('/(pet_resort_tabs)');
+          break;
+        case 'paravet':
+          router.replace('/(peravet_tabs)/(tabs)');
+          break;
+        default:
+          router.replace('/(vetician_tabs)');
       }
-      setIsReady(true);
-    };
-
-    checkAuth();
-  }, [segments]);
-
-  if (!isReady) {
-    return <LoadingScreen />;
-  }
+    }
+  }, [segments, isAuthenticated, user, navigationState?.key]);
 
   return children;
 }

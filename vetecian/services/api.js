@@ -38,6 +38,12 @@ class ApiService {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
+        // Handle token expiration
+        if (response.status === 401 && data.code === 'TOKEN_EXPIRED') {
+          console.error('❌ Token expired, clearing storage');
+          await AsyncStorage.multiRemove(['token', 'userId']);
+          throw new Error('Session expired. Please login again.');
+        }
         console.error('❌ API Response not OK:', response.status, data);
         throw new Error(data.message || 'API request failed');
       }
@@ -142,6 +148,18 @@ class ApiService {
 
   cancelDoorstepBooking(id) {
     return this.patch(`/doorstep/bookings/${id}/cancel`);
+  }
+
+  updateBookingStatus(id, status) {
+    return this.patch(`/doorstep/bookings/${id}/status`, { status });
+  }
+
+  getParavetBookings() {
+    return this.get('/doorstep/paravet/bookings');
+  }
+
+  getVerifiedParavets() {
+    return this.get('/paravet/verified');
   }
 
   /* =========================
