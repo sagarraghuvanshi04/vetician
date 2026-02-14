@@ -1,4 +1,5 @@
-import { io } from 'socket.io-client';
+// Temporarily disabled socket.io-client due to React Native compatibility issues
+// import { io } from 'socket.io-client';
 
 const SOCKET_URL = 'http://localhost:3000';
 
@@ -8,38 +9,20 @@ class SocketService {
   }
 
   connect(userId, userType) {
-    if (this.socket?.connected) return;
-
-    this.socket = io(SOCKET_URL, {
-      transports: ['websocket'],
-      reconnection: true
-    });
-
-    this.socket.on('connect', () => {
-      console.log('✅ Socket connected');
-      if (userType === 'paravet') {
-        this.socket.emit('join-paravet', userId);
-      } else {
-        this.socket.emit('join-user', userId);
-      }
-    });
-
-    this.socket.on('disconnect', () => {
-      console.log('❌ Socket disconnected');
-    });
+    console.log('Socket service temporarily disabled');
+    // TODO: Implement React Native compatible socket connection
   }
 
   onNewBooking(callback) {
-    this.socket?.on('new-booking', callback);
+    console.log('Socket service temporarily disabled');
   }
 
   onBookingUpdated(callback) {
-    this.socket?.on('booking-updated', callback);
+    console.log('Socket service temporarily disabled');
   }
 
   disconnect() {
-    this.socket?.disconnect();
-    this.socket = null;
+    console.log('Socket service temporarily disabled');
   }
 }
 

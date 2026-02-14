@@ -14,12 +14,13 @@ import { useRouter } from 'expo-router';
 import { useDispatch, useSelector } from 'react-redux';
 import { signUpUser } from '../../store/slices/authSlice';
 import { validateEmail } from '../../utils/validation';
-import { Eye, EyeOff, Mail, Lock, User, PawPrint } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock, User, PawPrint, Phone } from 'lucide-react-native';
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -52,6 +53,8 @@ export default function SignUp() {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = 'Full name is required';
     if (!formData.email.trim() || !validateEmail(formData.email)) newErrors.email = 'Valid email is required';
+    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
+    else if (formData.phone.length !== 10 || !/^\d{10}$/.test(formData.phone)) newErrors.phone = 'Enter valid 10-digit phone number';
     if (!formData.password.trim() || formData.password.length < 6) newErrors.password = 'Password must be 6+ chars';
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
 
@@ -65,6 +68,7 @@ export default function SignUp() {
       const dispatchParams = {
         name: formData.name.trim(),
         email: formData.email.trim(),
+        phone: `+91${formData.phone.trim()}`,
         password: formData.password,
         role: loginType, // ✅ Backend usually expects 'role'
       };
@@ -172,6 +176,25 @@ export default function SignUp() {
               </View>
               {errors.email && (
                 <Text style={styles.errorText}>{errors.email}</Text>
+              )}
+            </View>
+
+            <View style={styles.inputContainer}>
+              <View style={styles.inputWrapper}>
+                <Phone size={20} color="#888" style={styles.inputIcon} />
+                <Text style={styles.countryCode}>+91</Text>
+                <TextInput
+                  style={[styles.input, errors.phone && styles.inputError]}
+                  placeholder="Phone Number"
+                  placeholderTextColor="#aaa"
+                  value={formData.phone}
+                  onChangeText={(value) => handleInputChange('phone', value)}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                />
+              </View>
+              {errors.phone && (
+                <Text style={styles.errorText}>{errors.phone}</Text>
               )}
             </View>
 
@@ -417,6 +440,12 @@ const styles = StyleSheet.create({
   },
   inputIcon: {
     marginRight: 12,
+  },
+  countryCode: {
+    fontSize: 16,
+    color: '#333',
+    marginRight: 8,
+    fontWeight: '500',
   },
   input: {
     flex: 1,

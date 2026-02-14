@@ -17,30 +17,6 @@ function LoadingScreen() {
 function AuthGuard({ children }) {
   const router = useRouter();
   const segments = useSegments();
-<<<<<<< HEAD
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
-
-  useEffect(() => {
-    // Wait for router to be ready
-    const timer = setTimeout(() => {
-      setIsNavigationReady(true);
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    if (!isNavigationReady) return;
-
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    const inAuthGroup = segments[0] === '(auth)';
-
-    if (!token && !inAuthGroup) {
-      router.replace('/(auth)/signin');
-    } else if (token && inAuthGroup) {
-      const userData = JSON.parse(user || '{}');
-      const role = userData.role || 'vetician';
-=======
   const navigationState = useRootNavigationState();
   const { isAuthenticated, user } = useSelector(state => state.auth);
 
@@ -53,7 +29,6 @@ function AuthGuard({ children }) {
       router.replace('/(auth)/signin');
     } else if (isAuthenticated && inAuthGroup) {
       const role = user?.role || 'vetician';
->>>>>>> c3f70b3e16b65b5b5957bcf1867279943f264502
       
       switch(role) {
         case 'veterinarian':
@@ -69,11 +44,7 @@ function AuthGuard({ children }) {
           router.replace('/(vetician_tabs)');
       }
     }
-<<<<<<< HEAD
-  }, [isNavigationReady, segments]);
-=======
   }, [segments, isAuthenticated, user, navigationState?.key]);
->>>>>>> c3f70b3e16b65b5b5957bcf1867279943f264502
 
   return children;
 }

@@ -28,14 +28,9 @@ const auth = catchAsync(async (req, res, next) => {
       return next(new AppError('Account has been deactivated', 401));
     }
 
-<<<<<<< HEAD
-    // 5. Add user to request
-=======
     if (user.changedPasswordAfter && user.changedPasswordAfter(decoded.iat)) {
       return next(new AppError('User recently changed password. Please log in again.', 401));
     }
-
->>>>>>> c3f70b3e16b65b5b5957bcf1867279943f264502
     req.user = user;
     next();
   } catch (error) {
@@ -47,13 +42,9 @@ const auth = catchAsync(async (req, res, next) => {
       });
     }
     if (error.name === 'JsonWebTokenError') {
-<<<<<<< HEAD
       return next(new AppError('Invalid token. Please log in again.', 401));
     } else if (error.name === 'TokenExpiredError') {
       return next(new AppError('Your session has expired. Please log in again.', 401));
-=======
-      return next(new AppError('Invalid token', 401));
->>>>>>> c3f70b3e16b65b5b5957bcf1867279943f264502
     }
     return next(new AppError('Authentication failed', 401));
   }

@@ -428,6 +428,14 @@ const authSlice = createSlice({
       state.isLoading = false; 
       console.log('✅ Loading state cleared');
     },
+    setCredentials: (state, action) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.refreshToken = action.payload.refreshToken;
+      state.isAuthenticated = true;
+      state.error = null;
+      console.log('✅ Credentials set in Redux state');
+    },
   },
   extraReducers: builder => {
     builder
@@ -545,6 +553,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { clearError, clearLoading } = authSlice.actions;
+export const { clearError, clearLoading, setCredentials } = authSlice.actions;
 export { signOutUser as signOut }; // Export signOutUser as signOut for backend integration
 export default authSlice.reducer;

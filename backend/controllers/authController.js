@@ -33,14 +33,26 @@ const register = catchAsync(async (req, res, next) => {
   console.log('🔍 REGISTER API - Request started');
   console.log('📝 REGISTER API - Request body:', req.body);
   
-  const { name, email, password, role = 'vetician' } = req.body;
+  const { name, email, phone, password, role = 'vetician' } = req.body;
   
   console.log('📋 REGISTER API - Extracted data:', {
     name: name ? name.trim() : name,
     email: email ? email.toLowerCase().trim() : email,
+    phone: phone ? phone.trim() : phone,
     password: password ? '***PROVIDED***' : 'MISSING',
     role
   });
+
+  // Validate required fields
+  if (!name || !email || !password) {
+    console.log('❌ REGISTER API - Missing required fields');
+    return next(new AppError('Name, email, and password are required', 400));
+  }
+
+  if (!phone) {
+    console.log('❌ REGISTER API - Phone number is required for new registrations');
+    return next(new AppError('Phone number is required', 400));
+  }
 
   // Updated role validation
   if (role && !['veterinarian', 'vetician', 'paravet', 'pet_resort'].includes(role)) {
@@ -70,6 +82,7 @@ const register = catchAsync(async (req, res, next) => {
   const user = new User({
     name: name.trim(),
     email: email.toLowerCase().trim(),
+    phone: phone.trim(),
     password,
     role
   });
@@ -1595,7 +1608,21 @@ const sendOTP = catchAsync(async (req, res, next) => {
   // Check if user exists
   let user;
   if (phoneNumber) {
-    user = await User.findOne({ phone: phoneNumber });
+    // For phone numbers, check both phone field and email field
+    user = await User.findOne({
+      $or: [
+        { phone: phoneNumber },
+        { phone: phoneNumber.replace('+91', '') }, // Try without country code
+        { phone: phoneNumber.replace('+', '') }    // Try without + sign
+      ]
+    });
+    
+    if (!user) {
+      console.log(`📞 No user found with phone: ${phoneNumber}`);
+      console.log('💡 Available phone numbers in database:');
+      const allUsers = await User.find({ phone: { $exists: true, $ne: null } }).select('phone email');
+      allUsers.forEach(u => console.log(`  - ${u.phone} (${u.email})`));
+    }
   } else {
     user = await User.findOne({ email: email.toLowerCase() });
   }
@@ -1653,25 +1680,81 @@ const sendOTP = catchAsync(async (req, res, next) => {
         console.error('❌ Response data:', error.response.data);
         console.error('❌ Response status:', error.response.status);
       }
-      console.log(`📱 OTP for ${phoneNumber}: ${otp}`);
       
-      res.status(200).json({
-        success: true,
-        message: 'OTP generated (check console for testing)',
-        verificationId,
-        otp: otp // For testing
+      // Check if it's the payment requirement error
+      if (error.response?.data?.message?.includes('complete one transaction')) {
+        return res.status(402).json({
+          success: false,
+          message: 'SMS service requires payment activation. Please use email OTP instead.',
+          errorCode: 'SMS_PAYMENT_REQUIRED',
+          suggestedAction: 'USE_EMAIL_OTP'
+        });
+      }
+      
+      // For other SMS errors
+      return res.status(500).json({
+        success: false,
+        message: 'SMS service temporarily unavailable. Please use email OTP instead.',
+        errorCode: 'SMS_SERVICE_ERROR',
+        suggestedAction: 'USE_EMAIL_OTP'
       });
     }
   } else {
-    // Email OTP - just log to console for now
-    console.log(`📧 OTP for ${email}: ${otp}`);
-    
-    res.status(200).json({
-      success: true,
-      message: 'OTP generated (check console for testing)',
-      verificationId,
-      otp: otp // For testing
-    });
+    // Email OTP using nodemailer with Gmail
+    try {
+      const nodemailer = require('nodemailer');
+      
+      // Create transporter using Gmail (free service)
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        },
+        // Add these options for better compatibility
+        tls: {
+          rejectUnauthorized: false
+        }
+      });
+      
+      // Test the connection first
+      await transporter.verify();
+      console.log('✅ Email server connection verified');
+      
+      const mailOptions = {
+        from: `"Vetician App" <${process.env.EMAIL_USER}>`,
+        to: email,
+        subject: 'Your Vetician OTP Code',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #4A90E2;">Vetician OTP Verification</h2>
+            <p>Your OTP code is:</p>
+            <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+              <h1 style="color: #4A90E2; font-size: 32px; margin: 0; letter-spacing: 5px;">${otp}</h1>
+            </div>
+            <p>This code will expire in 5 minutes.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #666; font-size: 12px;">This is an automated message from Vetician. Please do not reply.</p>
+          </div>
+        `
+      };
+      
+      const info = await transporter.sendMail(mailOptions);
+      console.log(`✅ Email OTP sent to ${email}:`, info.messageId);
+      
+      res.status(200).json({
+        success: true,
+        message: 'OTP sent successfully to your email',
+        verificationId
+      });
+    } catch (emailError) {
+      console.error('❌ Email Error:', emailError.message);
+      console.log(`📧 OTP for ${email}: ${otp}`);
+      
+      // Return error - don't show test OTP in frontend
+      return next(new AppError('Failed to send email OTP. Please check your email settings or try phone OTP.', 500));
+    }
   }
 });
 
@@ -1685,7 +1768,9 @@ const verifyOTP = catchAsync(async (req, res, next) => {
   
   const storedData = otpStorage.get(verificationId);
   if (!storedData) {
-    return next(new AppError('Invalid or expired verification ID', 400));
+    console.log('❌ Verification ID not found or expired:', verificationId);
+    console.log('🗺 Available verification IDs:', Array.from(otpStorage.keys()));
+    return next(new AppError('Invalid or expired verification ID. Please request a new OTP.', 400));
   }
   
   if (Date.now() > storedData.expiresAt) {
