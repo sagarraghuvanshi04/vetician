@@ -1,0 +1,49 @@
+# dependencies
+node_modules
+
+# expo
+.expo
+.expo-shared
+dist
+web-build
+expo-env.d.ts
+
+# native build folders (Expo managed)
+android
+ios
+build
+
+# metro / cache
+.metro-health-check*
+
+# debug logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# env files
+.env
+.env.*
+.env*.local
+
+# tests & coverage
+__tests__
+coverage
+
+# editor / system
+.vscode
+.DS_Store
+
+# git
+.git
+.gitignore
+README.md
+
+# security keys
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
