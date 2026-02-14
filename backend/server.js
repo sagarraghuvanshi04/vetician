@@ -1,9 +1,21 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const helmet = require('helmet');
+const http = require('http');
+const { Server } = require('socket.io');
 require('dotenv').config();
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Make io accessible to routes
+app.set('io', io);
 
 /* =========================
    CORS Middleware (FIRST - before everything)
@@ -71,10 +83,31 @@ app.post('/api/test', (req, res) => {
 });
 
 /* =========================
+   Socket.io Connection
+========================= */
+io.on('connection', (socket) => {
+  console.log('✅ Client connected:', socket.id);
+
+  socket.on('join-paravet', (paravetId) => {
+    socket.join(`paravet-${paravetId}`);
+    console.log(`👨‍⚕️ Paravet ${paravetId} joined`);
+  });
+
+  socket.on('join-user', (userId) => {
+    socket.join(`user-${userId}`);
+    console.log(`👤 User ${userId} joined`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected:', socket.id);
+  });
+});
+
+/* =========================
    Start Server
 ========================= */
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, '0.0.0.0', () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server live at http://localhost:${PORT}`);
 });

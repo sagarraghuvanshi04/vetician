@@ -176,13 +176,7 @@ export default function ResortOnboarding() {
         );
       }
 
-      // console.log('Resort data:', resortData);
-
-      // Alert.alert(
-      //   'Success',
-      //   'Pet resort created successfully!',
-      //   [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-      // );
+      
     } catch (error) {
       Alert.alert('Error', error.message || 'Failed to create resort');
     } finally {

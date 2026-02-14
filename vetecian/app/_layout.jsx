@@ -1,6 +1,6 @@
-import { Slot, useRouter, useSegments } from 'expo-router';
+import { Slot, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '../store/store';
 import { View, Text, StyleSheet } from 'react-native';
@@ -17,6 +17,7 @@ function LoadingScreen() {
 function AuthGuard({ children }) {
   const router = useRouter();
   const segments = useSegments();
+<<<<<<< HEAD
   const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   useEffect(() => {
@@ -39,6 +40,20 @@ function AuthGuard({ children }) {
     } else if (token && inAuthGroup) {
       const userData = JSON.parse(user || '{}');
       const role = userData.role || 'vetician';
+=======
+  const navigationState = useRootNavigationState();
+  const { isAuthenticated, user } = useSelector(state => state.auth);
+
+  useEffect(() => {
+    if (!navigationState?.key) return;
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/signin');
+    } else if (isAuthenticated && inAuthGroup) {
+      const role = user?.role || 'vetician';
+>>>>>>> c3f70b3e16b65b5b5957bcf1867279943f264502
       
       switch(role) {
         case 'veterinarian':
@@ -54,7 +69,11 @@ function AuthGuard({ children }) {
           router.replace('/(vetician_tabs)');
       }
     }
+<<<<<<< HEAD
   }, [isNavigationReady, segments]);
+=======
+  }, [segments, isAuthenticated, user, navigationState?.key]);
+>>>>>>> c3f70b3e16b65b5b5957bcf1867279943f264502
 
   return children;
 }

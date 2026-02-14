@@ -4,6 +4,7 @@ const Parent = require('../models/Parent');
 const Pet = require('../models/Pet');
 const Clinic = require('../models/Clinic');
 const Veterinarian = require('../models/Veterinarian');
+const Paravet = require('../models/Paravet');
 const { AppError } = require('../utils/appError');
 const { catchAsync } = require('../utils/catchAsync');
 const PetResort = require('../models/PetResort');
@@ -83,6 +84,43 @@ const register = catchAsync(async (req, res, next) => {
   console.log('💾 REGISTER API - Saving user to database...');
   await user.save();
   console.log('✅ REGISTER API - User saved successfully with ID:', user._id);
+
+  // Create role-specific entry
+  try {
+    if (role === 'vetician') {
+      console.log('➕ REGISTER API - Creating parent entry for vetician...');
+      const parent = new Parent({
+        name: user.name,
+        email: user.email,
+        user: user._id,
+        gender: 'other'
+      });
+      await parent.save();
+      console.log('✅ REGISTER API - Parent entry created:', parent._id);
+    } else if (role === 'paravet') {
+      const paravet = new Paravet({
+        userId: user._id.toString(),
+        personalInfo: {
+          fullName: { value: user.name, verified: true },
+          email: { value: user.email, verified: true }
+        },
+        applicationStatus: {
+          currentStep: 1,
+          completionPercentage: 10,
+          submitted: false,
+          approvalStatus: 'approved', // Auto-approve for testing
+          approvedAt: new Date()
+        },
+        isActive: true
+      });
+      await paravet.save();
+      console.log('✅ REGISTER API - Paravet entry created and auto-approved:', paravet._id);
+    }
+    // Note: pet_resort and veterinarian entries created during onboarding
+  } catch (roleError) {
+    console.error('❌ REGISTER API - Error creating role-specific entry:', roleError.message);
+    // Continue with registration even if role-specific entry fails
+  }
 
   // Generate tokens
   console.log('🎫 REGISTER API - Generating tokens...');
@@ -303,26 +341,60 @@ const login = catchAsync(async (req, res, next) => {
 // Register new parent
 const registerParent = catchAsync(async (req, res, next) => {
   const { name, email, phone, address, gender, image, userId } = req.body;
-  console.log(req.body);
+  console.log('🔍 REGISTER PARENT - Request body:', req.body);
 
-  // Check if parent already exists
-  const existingParent = await Parent.findByEmail(email);
-  if (existingParent) {
-    return next(new AppError('Parent with this email already exists', 400));
+  // Validate required fields
+  if (!name || !email || !phone || !address) {
+    console.log('❌ REGISTER PARENT - Missing required fields');
+    return next(new AppError('Name, email, phone and address are required', 400));
   }
 
   // Validate user exists if userId is provided
   if (userId) {
+    console.log('🔍 REGISTER PARENT - Checking if user exists:', userId);
     const user = await User.findById(userId);
     if (!user) {
+      console.log('❌ REGISTER PARENT - User not found:', userId);
       return next(new AppError('User not found', 404));
     }
+    console.log('✅ REGISTER PARENT - User found:', user._id);
   }
 
-  // Create new parent  
-  const parent = new Parent({
+  // Check if parent already exists by userId or email
+  console.log('🔍 REGISTER PARENT - Checking for existing parent...');
+  let parent = await Parent.findOne({ 
+    $or: [
+      { user: userId },
+      { email: email.toLowerCase().trim() }
+    ]
+  });
+
+  if (parent) {
+    console.log('📝 REGISTER PARENT - Updating existing parent:', parent._id);
+    // Update existing parent
+    parent.name = name;
+    parent.email = email.toLowerCase().trim();
+    parent.phone = phone;
+    parent.address = address;
+    if (gender) parent.gender = gender;
+    if (image) parent.image = image;
+    if (userId) parent.user = userId;
+    
+    await parent.save();
+    console.log('✅ REGISTER PARENT - Parent updated successfully:', parent._id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Parent information updated successfully',
+      parent: parent.getPublicProfile()
+    });
+  }
+
+  // Create new parent
+  console.log('➕ REGISTER PARENT - Creating new parent...');
+  parent = new Parent({
     name,
-    email,
+    email: email.toLowerCase().trim(),
     phone,
     address,
     gender: gender || 'other',
@@ -331,15 +403,12 @@ const registerParent = catchAsync(async (req, res, next) => {
   });
 
   await parent.save();
-
-  const { accessToken, refreshToken } = generateTokens(parent._id);
+  console.log('✅ REGISTER PARENT - New parent created:', parent._id);
 
   res.status(201).json({
     success: true,
     message: 'Parent registered successfully',
-    parent: parent.getPublicProfile(),
-    token: accessToken,
-    refreshToken,
+    parent: parent.getPublicProfile()
   });
 });
 

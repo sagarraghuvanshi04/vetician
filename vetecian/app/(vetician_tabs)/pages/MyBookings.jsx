@@ -12,15 +12,26 @@ import {
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import ApiService from '../../../services/api';
+import SocketService from '../../../services/socket';
+import { useSelector } from 'react-redux';
 
 export default function MyBookings() {
   const navigation = useNavigation();
+  const { user } = useSelector(state => state.auth);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchBookings();
+    SocketService.connect(user._id, 'user');
+    
+    SocketService.onBookingUpdated((updatedBooking) => {
+      setBookings(prev => prev.map(b => b._id === updatedBooking._id ? updatedBooking : b));
+      Alert.alert('Booking Updated', `Your booking is now ${updatedBooking.status}`);
+    });
+
+    return () => SocketService.disconnect();
   }, []);
 
   const fetchBookings = async () => {

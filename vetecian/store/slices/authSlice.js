@@ -220,7 +220,7 @@ export const parentUser = createAsyncThunk(
 
 export const getParent = createAsyncThunk(
   'auth/getParent',
-  async (userId, { rejectWithValue }) => {
+  async (userId, { rejectWithValue, dispatch }) => {
     try {
       if (!userId) throw new Error('User ID is required');
       const BASE_URL = getApiBaseUrl();
@@ -228,6 +228,16 @@ export const getParent = createAsyncThunk(
       const res = await fetch(`${BASE_URL}/auth/parents/${userId}`, {
         headers,
       });
+      
+      if (res.status === 401) {
+        const data = await res.json();
+        if (data.code === 'TOKEN_EXPIRED') {
+          await AsyncStorage.multiRemove(['token', 'userId']);
+          dispatch({ type: 'auth/signOut' });
+          throw new Error('Session expired. Please login again.');
+        }
+      }
+      
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (error) {
@@ -238,17 +248,27 @@ export const getParent = createAsyncThunk(
 
 export const updateParent = createAsyncThunk(
   'auth/updateParent',
-  async (parentData, { rejectWithValue }) => {
+  async (parentData, { rejectWithValue, dispatch }) => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       if (!userId) return rejectWithValue('User not authenticated');
       const BASE_URL = getApiBaseUrl();
-      const headers = await getCommonHeaders(true); // Include auth for update
+      const headers = await getCommonHeaders(true);
       const res = await fetch(`${BASE_URL}/auth/parent/${userId}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify(parentData),
       });
+      
+      if (res.status === 401) {
+        const data = await res.json();
+        if (data.code === 'TOKEN_EXPIRED') {
+          await AsyncStorage.multiRemove(['token', 'userId']);
+          dispatch({ type: 'auth/signOut' });
+          throw new Error('Session expired. Please login again.');
+        }
+      }
+      
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (error) {

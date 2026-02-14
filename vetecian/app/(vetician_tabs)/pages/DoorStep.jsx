@@ -19,8 +19,13 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from '@expo/vector-icons';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useRouter } from 'expo-router';
+import { getPetsByUserId, getParent } from '../../../store/slices/authSlice';
 import ApiService from '../../../services/api';
+import SocketService from '../../../services/socket';
+import { isProfileComplete, getMissingFields } from '../../../utils/profileValidation';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -88,42 +93,6 @@ const SERVICES = [
   },
 ];
 
-const SERVICE_PARTNERS = [
-  {
-    id: '1',
-    name: 'Rajesh Kumar',
-    photo: 'https://randomuser.me/api/portraits/men/1.jpg',
-    experience: '8 years',
-    rating: 4.8,
-    reviews: 234,
-    verified: true,
-    specialization: 'Vet Technician',
-    distance: '2.3 km',
-  },
-  {
-    id: '2',
-    name: 'Priya Sharma',
-    photo: 'https://randomuser.me/api/portraits/women/2.jpg',
-    experience: '5 years',
-    rating: 4.9,
-    reviews: 189,
-    verified: true,
-    specialization: 'Pet Groomer',
-    distance: '3.1 km',
-  },
-  {
-    id: '3',
-    name: 'Amit Singh',
-    photo: 'https://randomuser.me/api/portraits/men/3.jpg',
-    experience: '10 years',
-    rating: 4.7,
-    reviews: 312,
-    verified: true,
-    specialization: 'Vet Technician',
-    distance: '1.8 km',
-  },
-];
-
 const generateTimeSlots = () => {
   const slots = [];
   for (let hour = 8; hour <= 20; hour++) {
@@ -164,7 +133,11 @@ const generateDates = () => {
 
 // Booking Modal Component
 const BookingModal = ({ visible, onClose, service }) => {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const { user } = useSelector(state => state.auth);
   const pets = useSelector(state => state.auth?.userPets?.data || []);
+  const parentData = useSelector(state => state.auth?.parentData?.data?.parent?.[0]);
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedPartner, setSelectedPartner] = useState(null);
@@ -174,9 +147,55 @@ const BookingModal = ({ visible, onClose, service }) => {
   const [specialInstructions, setSpecialInstructions] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('online');
   const [couponCode, setCouponCode] = useState('');
+  const [servicePartners, setServicePartners] = useState([]);
+  const [loadingPartners, setLoadingPartners] = useState(false);
 
   const dates = generateDates();
   const timeSlots = generateTimeSlots();
+
+  useEffect(() => {
+    if (visible) {
+      console.log('🔄 Modal opened, fetching pets...');
+      console.log('📊 Current pets in Redux:', pets);
+      dispatch(getPetsByUserId());
+      fetchParavets();
+      checkProfile();
+    }
+  }, [visible]);
+
+  const checkProfile = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId && !parentData) {
+        await dispatch(getParent(userId)).unwrap();
+      }
+    } catch (error) {
+      console.error('Error fetching parent data:', error);
+    }
+  };
+
+  useEffect(() => {
+    console.log('🐾 Pets updated:', pets.length, 'pets');
+    if (pets.length > 0) {
+      console.log('✅ First pet:', pets[0]);
+    }
+  }, [pets]);
+
+  const fetchParavets = async () => {
+    try {
+      setLoadingPartners(true);
+      console.log('🔍 Fetching paravets from API...');
+      const response = await ApiService.getVerifiedParavets();
+      console.log('✅ Paravets response:', response);
+      console.log('📊 Paravets count:', response.data?.length || 0);
+      setServicePartners(response.data || []);
+    } catch (error) {
+      console.error('❌ Error fetching paravets:', error);
+      setServicePartners([]);
+    } finally {
+      setLoadingPartners(false);
+    }
+  };
 
   const calculateTotal = () => {
     const basePrice = service?.price || 0;
@@ -187,6 +206,27 @@ const BookingModal = ({ visible, onClose, service }) => {
   };
 
   const handleConfirmBooking = async () => {
+    // Check profile completion first
+    if (!isProfileComplete(parentData)) {
+      Alert.alert(
+        'Complete Your Profile',
+        'Please complete your profile first.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Go to Profile', 
+            onPress: () => {
+              onClose();
+              setTimeout(() => {
+                router.push('/(vetician_tabs)/(tabs)/profile');
+              }, 300);
+            }
+          }
+        ]
+      );
+      return;
+    }
+
     if (!selectedDate || !selectedSlot || !selectedPartner || selectedPets.length === 0) {
       Alert.alert('Incomplete Information', 'Please fill all required fields');
       return;
@@ -200,6 +240,13 @@ const BookingModal = ({ visible, onClose, service }) => {
         servicePartnerName: selectedPartner.name,
         appointmentDate: selectedDate.fullDate,
         timeSlot: selectedSlot.time,
+        address: {
+          street: '123 Main Street',
+          city: 'Mumbai',
+          state: 'Maharashtra',
+          pincode: '400001',
+          landmark: 'Near Park'
+        },
         isEmergency,
         repeatBooking,
         specialInstructions,
@@ -211,7 +258,12 @@ const BookingModal = ({ visible, onClose, service }) => {
         totalAmount: calculateTotal()
       };
 
+      console.log('📤 Sending booking:', bookingData);
       const response = await ApiService.createDoorstepBooking(bookingData);
+      console.log('✅ Booking response:', response);
+
+      // Connect socket and emit booking created event
+      SocketService.connect(user._id, 'user');
 
       Alert.alert(
         'Booking Confirmed! 🎉',
@@ -224,6 +276,7 @@ const BookingModal = ({ visible, onClose, service }) => {
         ]
       );
     } catch (error) {
+      console.error('❌ Booking error:', error);
       Alert.alert('Error', error.message || 'Failed to create booking');
     }
   };
@@ -286,27 +339,31 @@ const BookingModal = ({ visible, onClose, service }) => {
           {/* Select Pets */}
           <View style={styles.modalSection}>
             <Text style={styles.sectionLabel}>Select Pets *</Text>
-            <View style={styles.petsGrid}>
-              {pets.map((pet) => (
-                <TouchableOpacity
-                  key={pet.id}
-                  style={[
-                    styles.petCard,
-                    selectedPets.find(p => p.id === pet.id) && styles.petCardSelected,
-                  ]}
-                  onPress={() => togglePetSelection(pet)}
-                >
-                  <View style={styles.petCheckbox}>
-                    {selectedPets.find(p => p.id === pet.id) && (
-                      <Ionicons name="checkmark" size={16} color="#fff" />
-                    )}
-                  </View>
-                  <Text style={styles.petEmoji}>{pet.type === 'Dog' ? '🐕' : '🐱'}</Text>
-                  <Text style={styles.petCardName}>{pet.name}</Text>
-                  <Text style={styles.petCardType}>{pet.type}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {pets.length === 0 ? (
+              <Text style={styles.noPetsText}>No pets found. Please add a pet first.</Text>
+            ) : (
+              <View style={styles.petsGrid}>
+                {pets.map((pet) => (
+                  <TouchableOpacity
+                    key={pet._id}
+                    style={[
+                      styles.petCard,
+                      selectedPets.find(p => p._id === pet._id) && styles.petCardSelected,
+                    ]}
+                    onPress={() => togglePetSelection(pet)}
+                  >
+                    <View style={styles.petCheckbox}>
+                      {selectedPets.find(p => p._id === pet._id) && (
+                        <Ionicons name="checkmark" size={16} color="#fff" />
+                      )}
+                    </View>
+                    <Text style={styles.petEmoji}>{pet.species === 'Dog' ? '🐕' : pet.species === 'Cat' ? '🐱' : '🐾'}</Text>
+                    <Text style={styles.petCardName}>{pet.name}</Text>
+                    <Text style={styles.petCardType}>{pet.species}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* Select Date */}
@@ -403,12 +460,16 @@ const BookingModal = ({ visible, onClose, service }) => {
           {/* Select Service Partner */}
           <View style={styles.modalSection}>
             <Text style={styles.sectionLabel}>Select Service Partner *</Text>
-            <Text style={styles.nearbyText}>
-              <MaterialIcons name="location-on" size={14} color="#10B981" />
-              {SERVICE_PARTNERS.length} providers available nearby
-            </Text>
+            {loadingPartners ? (
+              <Text style={styles.nearbyText}>Loading paravets...</Text>
+            ) : (
+              <Text style={styles.nearbyText}>
+                <MaterialIcons name="location-on" size={14} color="#10B981" />
+                {servicePartners.length} providers available nearby
+              </Text>
+            )}
             
-            {SERVICE_PARTNERS.map((partner) => (
+            {servicePartners.map((partner) => (
               <TouchableOpacity
                 key={partner.id}
                 style={[
@@ -569,7 +630,12 @@ const TrackingModal = ({ visible, onClose }) => {
     { id: 'completed', label: 'Service Completed', icon: 'done-all', color: '#4CAF50' },
   ];
 
-  const partner = SERVICE_PARTNERS[0];
+  const partner = {
+    name: 'Demo Partner',
+    photo: 'https://randomuser.me/api/portraits/men/1.jpg',
+    specialization: 'Paravet',
+    rating: 4.8
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -681,11 +747,40 @@ const TrackingModal = ({ visible, onClose }) => {
 
 // Main Component
 const ParavetModule = () => {
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const parentData = useSelector(state => state.auth?.parentData?.data?.parent?.[0]);
   const [selectedService, setSelectedService] = useState(null);
   const [bookingModalVisible, setBookingModalVisible] = useState(false);
   const [trackingModalVisible, setTrackingModalVisible] = useState(false);
 
+  useEffect(() => {
+    const fetchParentData = async () => {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId && !parentData) {
+        dispatch(getParent(userId));
+      }
+    };
+    fetchParentData();
+  }, []);
+
   const handleServiceSelect = (service) => {
+    // Check profile completion before opening modal
+    if (!isProfileComplete(parentData)) {
+      Alert.alert(
+        'Complete Your Profile',
+        'Please complete your profile first.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Go to Profile', 
+            onPress: () => router.push('/(vetician_tabs)/(tabs)/profile')
+          }
+        ]
+      );
+      return;
+    }
+    
     setSelectedService(service);
     setBookingModalVisible(true);
   };
@@ -1369,6 +1464,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+  },
+  noPetsText: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
   petCard: {
     width: (width - 60) / 3,

@@ -42,10 +42,8 @@ export default function PetDetail() {
   };
 
   const handleSubmit = async () => {
-    // Reset errors
     setErrors({});
 
-    // Validation
     const newErrors = {};
 
     if (!formData.name.trim()) {
@@ -76,18 +74,14 @@ export default function PetDetail() {
       setErrors(newErrors);
       return;
     }
-    // console.log(formData)
 
     try {
-      // Here you would typically send the data to your backend
-      // For now, we'll just show a success message
       const result = await dispatch(parentUser({
         name: formData.name.trim(),
         email: formData.email.trim(),
         phone: formData.phone,
         address: formData.address
       })).unwrap();
-      console.log(result)
 
       if (result.success) {
         Alert.alert(
@@ -97,7 +91,7 @@ export default function PetDetail() {
         );
       }
     } catch (error) {
-      Alert.alert('Error', 'An error occurred while saving parent information', error);
+      Alert.alert('Error', error || 'An error occurred while saving parent information');
     }
   };
 

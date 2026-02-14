@@ -2,7 +2,6 @@ import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import Home from '../pages/Home';
 import PetList from '../pages/PetList'
-// import ParentDetail from '../onboarding/parent_detail'
 import ClinicListScreen from '../pages/ClinicListScreen';
 import HealthTipsScreen from '../pages/HealthTipsScreen'
 import VideoCall from '../pages/VideoCall';
@@ -12,6 +11,7 @@ import BookHostel from '../pages/Hostel';
 import DayPlaySchool from '../pages/School';
 import PetTraining from '../pages/PetTraning';
 import Grooming from '../pages/Groming';
+import Notifications from '../pages/Notifications';
 
 const Drawer = createDrawerNavigator();
 
@@ -69,6 +69,11 @@ export default function AppDrawer() {
         name="ClinicList"
         component={ClinicListScreen}
         options={{ headerShown: false, title: 'Find Clinics' }}
+      />
+      <Drawer.Screen
+        name="Notifications"
+        component={Notifications}
+        options={{ headerShown: false, title: 'Notifications' }}
       />
       <Drawer.Screen
         name="Pets"
