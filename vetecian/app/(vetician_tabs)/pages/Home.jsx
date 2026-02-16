@@ -962,6 +962,7 @@ import { MaterialIcons, FontAwesome5, Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ApiService from '../../../services/api';
 import PetDetailModal from '../../../components/petparent/home/PetDetailModal';
+import Sidebar from '../../../components/Sidebar';
 
 const { width } = Dimensions.get('window');
 
@@ -978,22 +979,30 @@ export default function Home() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPet, setSelectedPet] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(false);
 
   // Fetch Parent Data
   const fetchParentData = async () => {
     try {
-      const data = await ApiService.get('/parents/profile');
-      setParentData(data);
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        const data = await ApiService.getParentById(userId);
+        if (data?.parent?.[0]) {
+          setParentData(data.parent[0]);
+        }
+      }
     } catch (err) {
       console.error('❌ Parent data fetch failed:', err.message);
     }
   };
 
-  // Fetch Dashboard Stats
+  // Fetch Dashboard Stats - Skip for non-veterinarians
   const fetchDashboard = async () => {
     try {
-      const data = await ApiService.get('/users/dashboard-stats');
-      setDashboard(data);
+      if (user?.role === 'veterinarian') {
+        const data = await ApiService.get('/users/dashboard-stats');
+        setDashboard(data);
+      }
     } catch (err) {
       console.error('❌ Dashboard fetch failed:', err.message);
     }
@@ -1004,18 +1013,21 @@ export default function Home() {
   // Fetch Nearby Clinics
   const fetchClinics = async () => {
     try {
-      const data = await ApiService.get('/clinics');
-      setClinics(data?.clinics || []);
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        const data = await ApiService.getAllVerifiedClinics();
+        setClinics(data || []);
+      }
     } catch (err) {
       console.error('❌ Clinics fetch failed:', err.message);
     }
   };
 
-  // Fetch Upcoming Appointments
+  // Fetch Upcoming Appointments - Skip for now
   const fetchAppointments = async () => {
     try {
-      const data = await ApiService.get('/appointments/upcoming');
-      setAppointments(data?.appointments || []);
+      // API not implemented yet
+      setAppointments([]);
     } catch (err) {
       console.error('❌ Appointments fetch failed:', err.message);
     }
@@ -1232,7 +1244,7 @@ export default function Home() {
         {/* Header with Gradient */}
         <LinearGradient colors={['#4E8D7C', '#6BA896']} style={styles.header}>
           <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => {}} style={styles.menuButton}>
+            <TouchableOpacity onPress={() => setSidebarVisible(true)} style={styles.menuButton}>
               <Menu size={24} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('pages/Notifications')} style={styles.notificationButton}>
@@ -1428,6 +1440,7 @@ export default function Home() {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
       />
+      <Sidebar visible={sidebarVisible} onClose={() => setSidebarVisible(false)} />
     </>
   );
 }
